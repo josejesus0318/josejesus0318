@@ -101,8 +101,24 @@ def traducir_error(exc: BaseException) -> ErrorAplicacion:
         return ErrorAplicacion(MENSAJES_SQLSTATE["28P01"], texto, "28P01")
     if "is not permitted to log in" in texto or "no tiene permitido iniciar sesión" in texto:
         return ErrorAplicacion("La cuenta está deshabilitada. Consulte al administrador.", texto, "28000")
-    if sqlstate is None and ("connection" in texto.lower() or "conexión" in texto.lower()
-                             or "could not" in texto.lower()):
+    minusculas = texto.lower()
+    if "database" in minusculas and "does not exist" in minusculas or (
+            "base de datos" in minusculas and "no existe" in minusculas):
+        return ErrorAplicacion("La base de datos indicada no existe. Ejecute database/instalar.sql "
+                               "en WSL o revise el nombre en «Opciones de conexión».", texto, "3D000")
+    if ("role" in minusculas and "does not exist" in minusculas) or (
+            "el rol" in minusculas and "no existe" in minusculas):
+        return ErrorAplicacion(MENSAJES_SQLSTATE["28P01"], texto, "28P01")
+    if "no pg_hba.conf entry" in minusculas or "no hay una línea en pg_hba.conf" in minusculas:
+        return ErrorAplicacion("El servidor rechazó la conexión desde esta computadora (pg_hba.conf).",
+                               texto, "28000")
+    if "connection refused" in minusculas or "conexión rehusada" in minusculas \
+            or "actively refused" in minusculas or "timeout" in minusculas:
+        return ErrorAplicacion("No se encontró PostgreSQL en ese servidor y puerto. En WSL ejecute "
+                               "«sudo service postgresql start» y revise el puerto (normalmente 5432).",
+                               texto, "08001")
+    if sqlstate is None and ("connection" in minusculas or "conexión" in minusculas
+                             or "could not" in minusculas):
         return ErrorAplicacion("No fue posible conectar con el servidor de base de datos. "
                                "Verifique que PostgreSQL esté encendido y los datos de conexión.",
                                texto, "08001")

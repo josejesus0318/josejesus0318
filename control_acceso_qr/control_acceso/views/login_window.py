@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpinBox,
@@ -130,6 +132,10 @@ class LoginWindow(QDialog):
             sesion.cerrar()
             self.btn_ingresar.setEnabled(True)
             self.txt_password.clear()
+            # Detalle técnico: en la consola y al pasar el mouse sobre el mensaje
+            if error.detalle:
+                print(f"[login] {error.detalle}", file=sys.stderr)
+            self.lbl_estado.setToolTip(error.detalle)
             if error.sqlstate in ("28P01", "28000"):
                 self._intentos += 1
                 if self._intentos >= MAX_INTENTOS:
