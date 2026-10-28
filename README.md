@@ -60,10 +60,16 @@ erDiagram
 - Un `CHECK` de exclusividad en `credenciales` garantiza un único titular por QR.
 - `ON DELETE CASCADE` solo en `registro_accesos` hacia `credenciales`.
 
+## Aplicación de escritorio (modelo v2)
+
+La carpeta [`control_acceso_qr/`](control_acceso_qr/) contiene la **aplicación de escritorio en Python (PyQt6)** con lector QR por cámara web. Usa el **modelo v2 de 18 tablas** (base `grupo_solutions_v2`), que evoluciona el modelo de 9 tablas de las actividades.
+
+En su [README](control_acceso_qr/README.md) están la instalación, las cuentas de demostración y la arquitectura en capas.
+
 ## Estructura del repositorio
 
 ```
-sql/
+sql/                           Modelo v1 (9 tablas) – actividades de la materia
 ├── 00_crear_base.sql          Crea la base grupo_solutions
 ├── 01_tablas.sql              9 tablas, restricciones e índices
 ├── 02_datos.sql               Datos de prueba y verificación de la carga
@@ -71,6 +77,7 @@ sql/
 ├── 04_vistas.sql              13 vistas (Actividad 2.3)
 ├── 05_seguridad.sql           Usuarios, roles y privilegios (Actividad 3.1)
 └── 99_limpiar_seguridad.sql   Elimina usuarios y roles para volver a empezar
+control_acceso_qr/             Aplicación de escritorio + modelo v2 (18 tablas)
 docs/                          Reportes técnicos y resumen del proyecto (.docx)
 ```
 

@@ -1,0 +1,9 @@
+# Sistema de Control de Acceso QR – Grupo Solutions
+# Instalar con:  pip install -r requirements.txt
+# Python 3.10 o superior (probado para 3.11 – 3.13)
+
+PyQt6>=6.6            # Interfaz gráfica de escritorio
+psycopg[binary]>=3.1  # Conector de PostgreSQL (psycopg 3, incluye libpq)
+opencv-python>=4.8    # Cámara web, decodificación y generación de QR
+numpy>=1.24           # Manejo de los fotogramas de la cámara
+pyzbar>=0.1.9         # Decodificador QR principal (si no carga, se usa OpenCV)
