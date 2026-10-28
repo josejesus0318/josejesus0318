@@ -27,6 +27,8 @@ control_acceso_qr/
 │   ├── views/                  Pantallas PyQt6 (ninguna contiene SQL)
 │   └── utils/                  Configuración, sesión, errores, permisos y QR
 ├── recursos/estilo.qss         Tema visual (magenta)
+├── herramientas/
+│   └── compartir_bd.ps1        Comparte la base de WSL con otras PC de la red
 └── pruebas/
     ├── verificar_instalacion.py
     └── generar_qr_demo.py
@@ -111,6 +113,10 @@ python main.py
 El verificador revisa las librerías, la conexión con una cuenta (por omisión `gs_admin`), los roles, la cámara y la lectura de un QR. Si todo sale `[OK]`, la aplicación está lista.
 
 La aplicación corre en Windows (donde está la cámara) y se conecta a PostgreSQL de WSL por `127.0.0.1:5432`, como indica `config.ini`. Estos datos también se pueden cambiar en **Opciones de conexión** del login.
+
+### 3. Desde otra computadora
+
+Para que otra persona use la aplicación desde su computadora conectándose a la misma base de datos, sigan la **[Guía: conectarse desde otra computadora](GUIA_OTRA_PC.md)**.
 
 ---
 
