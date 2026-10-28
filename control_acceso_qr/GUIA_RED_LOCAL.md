@@ -1,6 +1,6 @@
-# Guía: conectarse desde otra computadora
+# Guía opcional: compartir una base de datos con otras computadoras de la red
 
-Esta guía permite que otra persona use la aplicación desde **su propia computadora**, conectada a la **misma base de datos** que está en la computadora servidor.
+> **¿Buscan instalar la aplicación en otra computadora con su propia base de datos?** Sigan la **[Guía de instalación](GUIA_INSTALACION.md)**. Esta guía es solo para otro caso: que varias computadoras usen **una misma base de datos** que vive en una sola PC.
 
 - **PC servidor:** la computadora que tiene PostgreSQL instalado en WSL, con la base `grupo_solutions_v2`.
 - **PC cliente:** la computadora de la otra persona. No necesita WSL ni PostgreSQL, solo Python y la aplicación.
@@ -19,7 +19,8 @@ En la terminal de **WSL (Ubuntu)**:
 
 ```bash
 sudo -u postgres psql -c "ALTER SYSTEM SET listen_addresses = '*';"
-echo "host all all 172.16.0.0/12 scram-sha-256" | sudo tee -a /etc/postgresql/18/main/pg_hba.conf
+HBA=$(sudo -u postgres psql -tAc "SHOW hba_file;")
+echo "host all all 172.16.0.0/12 scram-sha-256" | sudo tee -a "$HBA"
 sudo service postgresql restart
 ```
 

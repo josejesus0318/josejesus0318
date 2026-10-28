@@ -64,7 +64,7 @@ erDiagram
 
 La carpeta [`control_acceso_qr/`](control_acceso_qr/) contiene la **aplicación de escritorio en Python (PyQt6)** con lector QR por cámara web. Usa el **modelo v2 de 18 tablas** (base `grupo_solutions_v2`), que evoluciona el modelo de 9 tablas de las actividades.
 
-En su [README](control_acceso_qr/README.md) están la instalación, las cuentas de demostración y la arquitectura en capas.
+Para instalarla y ejecutarla en cualquier computadora, sigan la **[Guía de instalación paso a paso](control_acceso_qr/GUIA_INSTALACION.md)**. En su [README](control_acceso_qr/README.md) están las cuentas de demostración y la arquitectura en capas.
 
 ## Estructura del repositorio
 

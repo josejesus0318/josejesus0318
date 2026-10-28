@@ -104,19 +104,21 @@ Debe terminar con `>> Instalación terminada` y una tabla con las 6 cuentas `gs_
 ```powershell
 cd ruta\al\repositorio\control_acceso_qr
 py -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python pruebas\verificar_instalacion.py
-python main.py
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe pruebas\verificar_instalacion.py
+.venv\Scripts\python.exe main.py
 ```
+
+> Si la aplicación no conecta con `127.0.0.1`, sigan el paso 3 de la [Guía de instalación](GUIA_INSTALACION.md): permite que Windows se conecte a PostgreSQL de WSL y usa la IP de WSL.
 
 El verificador revisa las librerías, la conexión con una cuenta (por omisión `gs_admin`), los roles, la cámara y la lectura de un QR. Si todo sale `[OK]`, la aplicación está lista.
 
 La aplicación corre en Windows (donde está la cámara) y se conecta a PostgreSQL de WSL por `127.0.0.1:5432`, como indica `config.ini`. Estos datos también se pueden cambiar en **Opciones de conexión** del login.
 
-### 3. Desde otra computadora
+### Guías
 
-Para que otra persona use la aplicación desde su computadora conectándose a la misma base de datos, sigan la **[Guía: conectarse desde otra computadora](GUIA_OTRA_PC.md)**.
+- **[Guía de instalación paso a paso](GUIA_INSTALACION.md):** instalar y ejecutar todo en cualquier computadora con WSL, PostgreSQL y Python, incluidas las soluciones a los errores comunes de Windows.
+- **[Guía opcional de red local](GUIA_RED_LOCAL.md):** que varias computadoras usen una misma base de datos.
 
 ---
 
