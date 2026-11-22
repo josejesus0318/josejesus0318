@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "macros.html" import estado_credencial, resultado, metodo, usos, boton_estado, csrf with context %}
+{% block titulo %}Credencial de {{ c.titular }}{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>{{ c.titular }}</h1>
+    <p class="sub">{{ 'Credencial personal' if c.tipo == 'personal' else 'Pase genérico (sin titular)' }} · {{ c.tipo_titular }}{% if c.numero %} · {{ c.numero }}{% endif %}</p>
+  </div>
+  <div class="acciones">
+    <a class="btn" href="{{ url_for('credenciales.imprimir', id_credencial=c.id_credencial) }}" target="_blank">Imprimir gafete</a>
+    {% if c.id_persona %}<a class="btn" href="{{ url_for('personas.detalle', id_persona=c.id_persona) }}">Ver persona</a>{% endif %}
+    {% if c.id_evento %}<a class="btn" href="{{ url_for('pases.evento', id_evento=c.id_evento) }}">Ver evento</a>{% endif %}
+    {% if puede('credenciales_estado') %}{{ boton_estado(url_for('credenciales.estado', id_credencial=c.id_credencial), c.activa, 'activa') }}{% endif %}
+  </div>
+</div>
+
+<div class="rejilla r3">
+  <section class="tarjeta qr-caja">
+    <div class="qr" id="qr-principal" data-qr="{{ c.token }}" data-tam="220"></div>
+    <div>{{ estado_credencial(c.estado) }}</div>
+    <code>{{ c.token }}</code>
+    <div class="acciones" style="justify-content:center">
+      <button type="button" class="btn chico" data-copiar="{{ c.token }}">Copiar código</button>
+      <a href="#" class="btn chico" data-descargar-qr="qr-principal" data-nombre="pase-{{ c.id_credencial }}">Descargar QR</a>
+    </div>
+    <p class="ayuda">Puede enviar la imagen del QR por WhatsApp o correo; en la caseta se lee desde la pantalla del celular.</p>
+  </section>
+
+  <section class="tarjeta" style="grid-column: span 2">
+    <h2>Reglas de acceso</h2>
+    <dl class="datos">
+      <dt>Perfil</dt><dd>{{ c.perfil }}</dd>
+      <dt>Puertas permitidas</dt><dd>{{ puntos|map(attribute='nombre')|join(', ') or 'Ninguna' }}</dd>
+      <dt>Horario</dt><dd>{% if horario %}{{ horario.nombre }}{{ ' (propio de este pase)' if c.horario_propio }}<div class="tenue">{{ horario.franjas or 'Sin franjas: no permite entrar' }}</div>{% else %}Sin restricción de horario{% endif %}</dd>
+      <dt>Válido desde</dt><dd>{{ c.vigencia_inicio|fecha }}</dd>
+      <dt>Caduca</dt><dd>{{ c.vigencia_fin|fecha if c.vigencia_fin else 'Sin caducidad' }}</dd>
+      <dt>Usos</dt><dd>{{ usos(c) }}</dd>
+      {% if c.tipo == 'personal' %}<dt>NIP</dt><dd>{{ 'Asignado' if c.tiene_nip else 'Sin NIP' }}</dd>{% endif %}
+      {% if c.evento %}<dt>Evento</dt><dd>{{ c.evento }}</dd>{% endif %}
+      <dt>Emitida</dt><dd>{{ c.creada_en|fecha }}{{ ' por ' ~ c.creada_por if c.creada_por }}</dd>
+    </dl>
+  </section>
+</div>
+
+{% if puede('credenciales_editar') %}
+<div class="rejilla r2">
+  <form method="post" action="{{ url_for('credenciales.editar', id_credencial=c.id_credencial) }}" class="tarjeta">
+    <h2>Modificar vigencia, horario y usos</h2>
+    {{ csrf() }}
+    {% with perfil_actual=c.id_perfil, horario_actual=(c.id_horario_efectivo if c.horario_propio else None),
+            inicio_actual=para_input(c.vigencia_inicio), fin_actual=para_input(c.vigencia_fin),
+            usos_actual=c.usos_maximos, requiere_inicio=True %}
+      {% include "credenciales/_campos.html" %}
+    {% endwith %}
+    <button class="btn primario" style="margin-top:1rem">Guardar cambios</button>
+  </form>
+  <div>
+    {% if c.tipo == 'personal' %}
+    <form method="post" action="{{ url_for('credenciales.nip', id_credencial=c.id_credencial) }}" class="tarjeta">
+      <h2>NIP para entrar sin QR</h2>
+      {{ csrf() }}
+      <div class="campo"><label>Nuevo NIP <span class="ayuda">(vacío = quitar el NIP)</span></label>
+        <input name="nip" inputmode="numeric" pattern="\d{4,6}" maxlength="6" autocomplete="off"></div>
+      <button class="btn" style="margin-top:.8rem">Guardar NIP</button>
+    </form>
+    {% endif %}
+    <form method="post" action="{{ url_for('credenciales.regenerar', id_credencial=c.id_credencial) }}" class="tarjeta"
+          data-confirmar="El código QR actual dejará de funcionar. ¿Continuar?">
+      <h2>¿Se perdió o se compartió el QR?</h2>
+      {{ csrf() }}
+      <p class="tenue">Genere un código nuevo. El anterior queda inservible al instante.</p>
+      <button class="btn peligro">Generar QR nuevo</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<section class="tarjeta sin-relleno">
+  <h2>Uso de este pase</h2>
+  {% if accesos %}
+  <div class="tabla"><table>
+    <thead><tr><th>Fecha</th><th>Punto</th><th>Resultado</th><th>Operador</th></tr></thead>
+    <tbody>
+    {% for r in accesos %}
+      <tr><td>{{ r.fecha|fecha }} {{ r.hora|hora }}</td><td>{{ r.punto }} {{ metodo(r.metodo) }}</td>
+          <td>{{ resultado(r) }}{% if r.motivo %}<div class="tenue">{{ r.motivo }}</div>{% endif %}</td>
+          <td class="tenue">{{ r.operador or '—' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="vacio">Este pase todavía no se ha usado.</p>{% endif %}
+</section>
+{% endblock %}

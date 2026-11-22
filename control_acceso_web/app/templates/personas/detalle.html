@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "macros.html" import estado_credencial, resultado, metodo, usos, boton_estado with context %}
+{% block titulo %}{{ p.nombre_completo }}{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>{{ p.nombre_completo }} {% if not p.activo %}<span class="etiqueta mal">Dado de baja</span>{% endif %}</h1>
+    <p class="sub">{{ p.tipo }}{% if p.numero %} · <span class="mono">{{ p.numero }}</span>{% endif %}{% if p.adscripcion %} · {{ p.adscripcion }}{% endif %}</p>
+  </div>
+  {% if puede('personas_editar') %}
+  <div class="acciones">
+    <a class="btn" href="{{ url_for('personas.editar', id_persona=p.id_persona) }}">Editar datos</a>
+    {% if p.activo %}<a class="btn primario" href="{{ url_for('credenciales.nueva', persona=p.id_persona) }}">+ Nueva credencial</a>{% endif %}
+    {{ boton_estado(url_for('personas.estado', id_persona=p.id_persona), p.activo, 'activo', 'Reactivar', 'Dar de baja',
+                    '¿Dar de baja? Todas sus credenciales se desactivarán.') }}
+  </div>
+  {% endif %}
+</div>
+
+<div class="rejilla r2">
+  <section class="tarjeta">
+    <h2>Datos</h2>
+    <dl class="datos">
+      {% if p.semestre %}<dt>Semestre</dt><dd>{{ p.semestre }}.º</dd>{% endif %}
+      {% if p.puesto %}<dt>Puesto</dt><dd>{{ p.puesto }}</dd>{% endif %}
+      <dt>Correo</dt><dd>{{ p.correo or '—' }}</dd>
+      <dt>Teléfono</dt><dd>{{ p.telefono or '—' }}</dd>
+      <dt>Identificación</dt><dd>{{ p.identificacion or '—' }}</dd>
+      <dt>Alta</dt><dd>{{ p.fecha_alta|fecha }}</dd>
+    </dl>
+  </section>
+  <section class="tarjeta sin-relleno">
+    <h2>Credenciales</h2>
+    {% if credenciales %}
+    <div class="tabla"><table>
+      <thead><tr><th>Credencial</th><th>Vigencia</th><th>Usos</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for c in credenciales %}
+        <tr>
+          <td><a href="{{ url_for('credenciales.detalle', id_credencial=c.id_credencial) }}">{{ c.perfil }}</a>
+              <div class="tenue">{{ 'Con NIP' if c.tiene_nip else 'Sin NIP' }} · {{ c.horario or 'Sin horario' }}</div></td>
+          <td>{{ c.vigencia_inicio|fecha }}<div class="tenue">hasta {{ c.vigencia_fin|fecha if c.vigencia_fin else 'sin caducidad' }}</div></td>
+          <td>{{ usos(c) }}</td>
+          <td>{{ estado_credencial(c.estado) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="vacio">Sin credenciales.</p>{% endif %}
+  </section>
+</div>
+
+<div class="rejilla r2">
+  <section class="tarjeta sin-relleno">
+    <h2>Llegadas y salidas</h2>
+    {% if asistencia %}
+    <div class="tabla"><table>
+      <thead><tr><th>Fecha</th><th>Llegada</th><th>Salida</th><th>Tiempo</th></tr></thead>
+      <tbody>
+      {% for a in asistencia %}
+        <tr><td>{{ a.fecha|fecha }}</td><td>{{ a.hora_llegada|hora }}</td>
+            <td>{% if a.estado == 'dentro' %}<span class="etiqueta ok">Dentro</span>{% else %}{{ a.hora_salida|hora }}{% endif %}</td>
+            <td>{{ a.tiempo_en_campus|duracion }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="vacio">Sin registros de asistencia.</p>{% endif %}
+  </section>
+  <section class="tarjeta sin-relleno">
+    <h2>Últimos accesos</h2>
+    {% if accesos %}
+    <div class="tabla"><table>
+      <thead><tr><th>Fecha</th><th>Punto</th><th>Resultado</th></tr></thead>
+      <tbody>
+      {% for r in accesos %}
+        <tr><td>{{ r.fecha|fecha }}<div class="tenue">{{ r.hora|hora }}</div></td>
+            <td>{{ r.punto }}<div>{{ metodo(r.metodo) }}</div></td>
+            <td>{{ resultado(r) }}{% if r.motivo %}<div class="tenue">{{ r.motivo }}</div>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="vacio">Sin accesos registrados.</p>{% endif %}
+  </section>
+</div>
+
+{% if visitas %}
+<section class="tarjeta sin-relleno">
+  <h2>Visitas</h2>
+  <div class="tabla"><table>
+    <thead><tr><th>Fecha</th><th>Motivo</th><th>Anfitrión</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for v in visitas %}
+      <tr><td>{{ v.fecha|fecha }}</td><td>{{ v.motivo }}</td><td>{{ v.anfitrion or '—' }}</td>
+          <td><span class="etiqueta {{ {'realizada':'ok','cancelada':'mal'}.get(v.estado,'azul') }}">{{ v.estado|capitalize }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+{% endblock %}

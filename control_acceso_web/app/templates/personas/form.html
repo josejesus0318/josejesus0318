@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}{{ 'Editar persona' if persona else 'Registrar persona' }}{% endblock %}
+{% block contenido %}
+{% set clave = persona.tipo_clave if persona else '' %}
+<h1>{{ 'Editar: ' ~ persona.nombre_completo if persona else 'Registrar persona' }}</h1>
+<p class="sub">{{ 'El tipo de persona no se puede cambiar.' if persona else 'Los datos específicos dependen del tipo de persona.' }}</p>
+<form method="post" class="tarjeta" style="max-width:900px">
+  {{ csrf() }}
+  <fieldset>
+    <legend>Datos generales</legend>
+    <div class="campos">
+      {% if not persona %}
+      <div class="campo"><label for="id_tipo">Tipo de persona</label>
+        <select id="id_tipo" name="id_tipo" required>
+          {% for t in tipos %}<option value="{{ t.id_tipo }}" data-clave="{{ t.clave }}">{{ t.nombre }}</option>{% endfor %}
+        </select></div>
+      {% else %}
+        <input type="hidden" id="id_tipo" value="{{ clave }}">
+      {% endif %}
+      <div class="campo"><label for="nombre">Nombre(s)</label><input id="nombre" name="nombre" value="{{ persona.nombre if persona }}" required maxlength="60"></div>
+      <div class="campo"><label for="ap">Apellido paterno</label><input id="ap" name="apellido_paterno" value="{{ persona.apellido_paterno if persona }}" required maxlength="40"></div>
+      <div class="campo"><label for="am">Apellido materno</label><input id="am" name="apellido_materno" value="{{ persona.apellido_materno or '' if persona }}" maxlength="40"></div>
+      <div class="campo"><label for="correo">Correo</label><input id="correo" name="correo" type="email" value="{{ persona.correo or '' if persona }}" maxlength="120"></div>
+      <div class="campo"><label for="tel">Teléfono</label><input id="tel" name="telefono" value="{{ persona.telefono or '' if persona }}" maxlength="15"></div>
+      <div class="campo"><label for="ident">Identificación oficial <span class="ayuda">(INE, pasaporte…)</span></label><input id="ident" name="identificacion" value="{{ persona.identificacion or '' if persona }}" maxlength="40"></div>
+    </div>
+  </fieldset>
+
+  <fieldset data-tipo="ALU">
+    <legend>Datos de alumno</legend>
+    <div class="campos">
+      <div class="campo"><label>Número de control</label><input name="numero_control" value="{{ persona.numero or '' if persona }}" maxlength="10" data-requerido="1"></div>
+      <div class="campo"><label>Carrera</label><select name="id_carrera" data-requerido="1">
+        {% for c in carreras %}<option value="{{ c.id_carrera }}" {{ 'selected' if persona and persona.id_carrera == c.id_carrera }}>{{ c.nombre }}</option>{% endfor %}
+      </select></div>
+      <div class="campo"><label>Semestre</label><input name="semestre" type="number" min="1" max="14" value="{{ persona.semestre or 1 if persona else 1 }}" data-requerido="1"></div>
+    </div>
+  </fieldset>
+
+  <fieldset data-tipo="DOC,ADM">
+    <legend>Datos de empleado</legend>
+    <div class="campos">
+      <div class="campo"><label>Número de empleado</label><input name="numero_empleado" value="{{ persona.numero or '' if persona }}" maxlength="10" data-requerido="1"></div>
+      <div class="campo"><label>Departamento</label><select name="id_departamento" data-requerido="1">
+        {% for d in departamentos %}<option value="{{ d.id_departamento }}" {{ 'selected' if persona and persona.id_departamento == d.id_departamento }}>{{ d.nombre }}</option>{% endfor %}
+      </select></div>
+      <div class="campo"><label>Puesto</label><input name="puesto" value="{{ persona.puesto or '' if persona }}" maxlength="80" data-requerido="1"></div>
+    </div>
+  </fieldset>
+
+  <fieldset data-tipo="PRV">
+    <legend>Empresa del proveedor</legend>
+    <div class="campos">
+      <div class="campo"><label>Empresa registrada</label><select name="id_empresa"><option value="">— Elegir —</option>
+        {% for e in empresas %}<option value="{{ e.id_empresa }}" {{ 'selected' if persona and persona.id_empresa == e.id_empresa }}>{{ e.nombre }}</option>{% endfor %}
+      </select></div>
+      <div class="campo"><label>…o empresa nueva</label><input name="empresa_nueva" maxlength="120" placeholder="Nombre de la empresa"></div>
+    </div>
+  </fieldset>
+
+  {% if not persona %}
+  <fieldset>
+    <legend>Credencial</legend>
+    <label class="opciones"><label><input type="checkbox" name="emitir" value="1" checked> Emitir credencial con QR al guardar</label></label>
+    <div class="campos" data-mostrar-si="emitir=1" style="margin-top:.7rem">
+      <div class="campo"><label>NIP para entrar sin QR <span class="ayuda">(4 a 6 dígitos, opcional)</span></label>
+        <input name="nip" inputmode="numeric" pattern="\d{4,6}" maxlength="6" autocomplete="off"></div>
+    </div>
+    <p class="ayuda">El perfil de acceso (puertas y horario) se asigna según el tipo de persona. Para visitas y proveedores con fecha de caducidad use <a href="{{ url_for('pases.visita') }}">Pase de visita / proveedor</a>.</p>
+  </fieldset>
+  {% endif %}
+
+  <div class="acciones">
+    <button class="btn primario">Guardar</button>
+    <a class="btn" href="{{ url_for('personas.detalle', id_persona=persona.id_persona) if persona else url_for('personas.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var sel = document.getElementById('id_tipo');
+  function clave() { return sel.tagName === 'SELECT' ? sel.options[sel.selectedIndex].dataset.clave : sel.value; }
+  function actualizar() {
+    var c = clave();
+    document.querySelectorAll('[data-tipo]').forEach(function (f) {
+      var visible = f.dataset.tipo.split(',').indexOf(c) !== -1;
+      f.classList.toggle('oculto', !visible);
+      f.querySelectorAll('[data-requerido]').forEach(function (i) { i.required = visible; i.disabled = !visible; });
+    });
+  }
+  sel.addEventListener('change', actualizar);
+  actualizar();
+})();
+</script>
+{% endblock %}

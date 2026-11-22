@@ -1,0 +1,20 @@
+# Blueprint de Render: crea la aplicación web del Control de Acceso Campus ITVH.
+# La base de datos vive en Neon (PostgreSQL gratuito sin caducidad); su cadena de
+# conexión se escribe en DATABASE_URL cuando Render la pida.
+services:
+  - type: web
+    name: control-acceso-itvh
+    runtime: python
+    plan: free
+    region: ohio
+    rootDir: control_acceso_web
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --workers 1 --threads 8 --timeout 60
+    healthCheckPath: /login
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.10

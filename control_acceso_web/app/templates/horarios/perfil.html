@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}Perfil {{ p.nombre }}{% endblock %}
+{% block contenido %}
+<h1>Perfil: {{ p.nombre }}</h1>
+<p class="sub">Los cambios se aplican de inmediato a todas las credenciales con este perfil.</p>
+<form method="post" class="tarjeta" style="max-width:760px">
+  {{ csrf() }}
+  <div class="campos">
+    <div class="campo ancho"><label>Descripción</label><input name="descripcion" value="{{ p.descripcion or '' }}" maxlength="200"></div>
+    <div class="campo"><label>Horario por omisión</label>
+      <select name="id_horario"><option value="">Sin restricción de horario</option>
+        {% for h in horarios %}<option value="{{ h.id_horario }}" {{ 'selected' if h.id_horario == p.id_horario }}>{{ h.nombre }}</option>{% endfor %}
+      </select></div>
+    <div class="campo ancho"><label>Puertas permitidas</label>
+      <div class="opciones" style="flex-direction:column;align-items:flex-start">
+        {% for pt in puntos %}
+          <label><input type="checkbox" name="puntos" value="{{ pt.id_punto }}" {{ 'checked' if pt.permitido }}>
+            {{ pt.nombre }} <span class="tenue">({{ 'perímetro' if pt.perimetral else 'área interna' }}{{ ', desactivado' if not pt.activo }})</span></label>
+        {% endfor %}
+      </div></div>
+  </div>
+  <div class="acciones" style="margin-top:1rem">
+    <button class="btn primario">Guardar</button>
+    <a class="btn" href="{{ url_for('horarios.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "macros.html" import resultado, metodo with context %}
+{% block titulo %}Bitácora{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Bitácora de accesos</h1><p class="sub">Todos los movimientos e intentos denegados. Los registros no se pueden modificar ni borrar.</p></div>
+  <a class="btn" href="{{ request.full_path }}{{ '&' if '?' in request.full_path else '?' }}formato=csv">Descargar CSV</a>
+</div>
+<form class="filtros" method="get">
+  <div class="campo"><label>Desde</label><input type="date" name="desde" value="{{ desde }}"></div>
+  <div class="campo"><label>Hasta</label><input type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="campo"><label>Punto</label><select name="punto"><option value="">Todos</option>
+    {% for p in puntos %}<option value="{{ p.id_punto }}" {{ 'selected' if f.punto == p.id_punto|string }}>{{ p.nombre }}</option>{% endfor %}</select></div>
+  <div class="campo"><label>Resultado</label><select name="resultado"><option value="">Todos</option>
+    <option value="permitido" {{ 'selected' if f.resultado == 'permitido' }}>Permitido</option>
+    <option value="denegado" {{ 'selected' if f.resultado == 'denegado' }}>Denegado</option></select></div>
+  <div class="campo"><label>Método</label><select name="metodo"><option value="">Todos</option>
+    {% for m, t in [('qr','QR'),('nip','NIP'),('manual','Manual')] %}<option value="{{ m }}" {{ 'selected' if f.metodo == m }}>{{ t }}</option>{% endfor %}</select></div>
+  <div class="campo"><label>Buscar</label><input type="search" name="q" value="{{ f.q or '' }}" placeholder="Persona o motivo"></div>
+  <button class="btn">Filtrar</button>
+</form>
+<div class="tarjeta sin-relleno"><div class="tabla"><table>
+  <thead><tr><th>Fecha y hora</th><th>Persona</th><th>Punto</th><th>Método</th><th>Resultado</th><th>Operador</th></tr></thead>
+  <tbody>
+  {% for r in registros %}
+    <tr><td>{{ r.fecha|fecha }}<div class="tenue">{{ r.hora|hora }}</div></td>
+        <td>{% if r.id_persona %}<a href="{{ url_for('personas.detalle', id_persona=r.id_persona) }}">{{ r.persona }}</a>{% else %}{{ r.persona }}{% endif %}
+            <div class="tenue">{{ r.tipo or '' }}{% if r.dato_leido %} · leído: <span class="mono">{{ r.dato_leido }}</span>{% endif %}</div></td>
+        <td>{{ r.punto }}</td><td>{{ metodo(r.metodo) }}</td>
+        <td>{{ resultado(r) }}{% if r.motivo %}<div class="tenue">{{ r.motivo }}</div>{% endif %}</td>
+        <td class="tenue">{{ r.operador or '—' }}</td></tr>
+  {% else %}
+    <tr><td colspan="6" class="tenue">Sin movimientos en ese periodo.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% if registros|length == 1000 %}<p class="tenue">Se muestran los 1000 más recientes. Reduzca el periodo o descargue el CSV.</p>{% endif %}
+{% endblock %}

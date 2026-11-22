@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, estado_credencial, usos, boton_estado with context %}
+{% block titulo %}{{ ev.nombre }}{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>{{ ev.nombre }}</h1>
+    <p class="sub">{{ ev.lugar or '' }} · {{ ev.inicio|fecha }} al {{ ev.fin|fecha }}{% if ev.cupo %} · cupo {{ ev.cupo }}{% endif %}</p></div>
+  <div class="acciones">
+    <a class="btn" href="{{ url_for('pases.imprimir_evento', id_evento=ev.id_evento) }}" target="_blank">Imprimir pases vigentes</a>
+  </div>
+</div>
+<div class="rejilla r3">
+  <section class="tarjeta sin-relleno" style="grid-column: span 2">
+    <h2>Pases ({{ pases|length }})</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Pase</th><th>Usos</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+      {% for c in pases %}
+        <tr><td><a href="{{ url_for('credenciales.detalle', id_credencial=c.id_credencial) }}">{{ c.titular }}</a>
+                <div class="tenue mono">{{ c.token }}</div></td>
+            <td>{{ usos(c) }}</td><td>{{ estado_credencial(c.estado) }}</td>
+            <td>{{ boton_estado(url_for('credenciales.estado', id_credencial=c.id_credencial), c.activa, 'activa') }}</td></tr>
+      {% else %}
+        <tr><td colspan="4" class="tenue">Aún no hay pases. Genérelos con el formulario.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <form method="post" action="{{ url_for('pases.generar', id_evento=ev.id_evento) }}" class="tarjeta">
+    <h2>Generar pases</h2>
+    {{ csrf() }}
+    <div class="opciones" style="flex-direction:column;align-items:flex-start">
+      <label><input type="radio" name="modo" value="individuales" checked> Pases individuales de un solo uso</label>
+      <label><input type="radio" name="modo" value="grupal"> Un pase grupal con varios usos</label>
+    </div>
+    <div class="campo" style="margin-top:.8rem"><label>Cantidad <span class="ayuda">(pases o personas)</span></label>
+      <input type="number" name="cantidad" min="1" max="500" value="10" required></div>
+    <div class="campo" style="margin-top:.7rem"><label>Etiqueta</label>
+      <input name="etiqueta" maxlength="80" placeholder="Pase de evento / Grupo CBTIS 32"></div>
+    <p class="ayuda">Los pases valen solo durante las fechas del evento y permiten el acceso principal y el auditorio.</p>
+    <button class="btn primario">Generar</button>
+  </form>
+</div>
+{% endblock %}

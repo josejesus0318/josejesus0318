@@ -5,6 +5,8 @@ __pycache__/
 venv/
 
 # Archivos generados por la aplicación
+.env
+.pytest_cache/
 control_acceso_qr/qr_demo/
 *.csv
 

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}Nueva credencial{% endblock %}
+{% block contenido %}
+<h1>{{ 'Nuevo pase genérico' if tipo == 'generica' else 'Nueva credencial personal' }}</h1>
+<p class="sub">{{ 'Sin titular: lo puede usar quien lo porte (cuadrillas, eventos, préstamo de caseta).' if tipo == 'generica'
+                 else 'Credencial a nombre de una persona.' }}</p>
+<form method="post" class="tarjeta" style="max-width:900px">
+  {{ csrf() }}
+  <input type="hidden" name="tipo" value="{{ tipo }}">
+  <fieldset>
+    <legend>{{ 'Descripción del pase' if tipo == 'generica' else 'Titular' }}</legend>
+    {% if tipo == 'generica' %}
+      <div class="campos">
+        <div class="campo ancho"><label>Descripción</label>
+          <input name="descripcion" required maxlength="120" placeholder="Ej. Cuadrilla de mantenimiento, Préstamo caseta #3"></div>
+        <div class="campo"><label>Evento <span class="ayuda">(opcional)</span></label>
+          <select name="id_evento"><option value="">Ninguno</option>
+            {% for e in eventos %}<option value="{{ e.id_evento }}">{{ e.nombre }}</option>{% endfor %}
+          </select></div>
+      </div>
+    {% elif persona %}
+      <input type="hidden" name="id_persona" value="{{ persona.id_persona }}">
+      <p><b>{{ persona.nombre_completo }}</b> · {{ persona.tipo }}{% if persona.numero %} · {{ persona.numero }}{% endif %}</p>
+    {% else %}
+      <div class="campo"><label>Persona</label>
+        <select name="id_persona" required><option value="">— Elegir —</option>
+          {% for p in personas %}<option value="{{ p.id_persona }}">{{ p.nombre_completo }} · {{ p.tipo }}{{ ' · ' ~ p.numero if p.numero }}</option>{% endfor %}
+        </select></div>
+    {% endif %}
+    {% if tipo == 'personal' %}
+      <div class="campo" style="margin-top:.9rem;max-width:280px"><label>NIP para entrar sin QR <span class="ayuda">(opcional)</span></label>
+        <input name="nip" inputmode="numeric" pattern="\d{4,6}" maxlength="6" autocomplete="off" placeholder="4 a 6 dígitos"></div>
+    {% endif %}
+  </fieldset>
+  <fieldset>
+    <legend>Acceso</legend>
+    {% with perfil_actual=perfil_sugerido or ('Invitado a evento' if tipo == 'generica' else None), horario_actual=None,
+            inicio_actual='', fin_actual='', usos_actual=None, requiere_inicio=False %}
+      {% include "credenciales/_campos.html" %}
+    {% endwith %}
+  </fieldset>
+  <div class="acciones">
+    <button class="btn primario">Emitir</button>
+    <a class="btn" href="{{ url_for('credenciales.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

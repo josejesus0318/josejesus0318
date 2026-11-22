@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}Horario {{ h.nombre }}{% endblock %}
+{% block contenido %}
+<h1>Horario: {{ h.nombre }}</h1>
+<p class="sub">{{ h.descripcion or 'Franjas en las que se permite entrar.' }} La salida siempre se permite.</p>
+<div class="rejilla r2">
+  <section class="tarjeta sin-relleno">
+    <h2>Franjas</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Día</th><th>Desde</th><th>Hasta</th><th></th></tr></thead>
+      <tbody>
+      {% for f in franjas %}
+        <tr><td>{{ DIAS[f.dia_semana - 1] }}</td><td>{{ f.hora_inicio|hora }}</td><td>{{ f.hora_fin|hora }}</td>
+            <td><form class="linea" method="post" action="{{ url_for('horarios.borrar_franja', id_horario=h.id_horario, id_franja=f.id_franja) }}">
+                {{ csrf() }}<button class="btn chico peligro">Quitar</button></form></td></tr>
+      {% else %}
+        <tr><td colspan="4" class="tenue">Sin franjas: con este horario nadie puede entrar.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <form method="post" action="{{ url_for('horarios.agregar_franja', id_horario=h.id_horario) }}" class="tarjeta">
+    <h2>Agregar franja</h2>
+    {{ csrf() }}
+    <div class="campos">{% include "horarios/_dias.html" %}</div>
+    <button class="btn primario" style="margin-top:1rem">Agregar</button>
+    <a class="btn" href="{{ url_for('horarios.lista') }}" style="margin-top:1rem">Volver</a>
+  </form>
+</div>
+{% endblock %}

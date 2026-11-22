@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block titulo %}Control de Acceso{% endblock %} · Campus ITVH</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231b396a'/><text x='16' y='21' font-size='12' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>ITVH</text></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+  {% block cabeza %}{% endblock %}
+</head>
+<body>
+{% set ep = request.endpoint or '' %}
+<div class="app">
+  <aside class="lateral" id="lateral">
+    <div class="marca">
+      <div class="logo">ITVH</div>
+      <div><b>Control de Acceso</b><small>Campus Villahermosa</small></div>
+    </div>
+    <nav class="menu">
+      {% macro opcion(modulo, ruta, ico, texto, prefijo) %}
+        {% if puede(modulo) %}<a href="{{ url_for(ruta) }}" class="{{ 'activo' if ep.startswith(prefijo) }}"><span class="ico">{{ ico }}</span>{{ texto }}</a>{% endif %}
+      {% endmacro %}
+      {{ opcion('panel', 'panel.inicio', '▦', 'Panel', 'panel.') }}
+      {{ opcion('caseta', 'caseta.inicio', '⌖', 'Caseta / Lector QR', 'caseta.') }}
+      {{ opcion('personas', 'personas.lista', '☺', 'Personas', 'personas.') }}
+      {{ opcion('credenciales', 'credenciales.lista', '▣', 'Credenciales', 'credenciales.') }}
+      {% if puede('pases') %}
+        <a href="{{ url_for('pases.visita') }}" class="{{ 'activo' if ep == 'pases.visita' }}"><span class="ico">✚</span>Pase de visita / proveedor</a>
+        <a href="{{ url_for('pases.eventos') }}" class="{{ 'activo' if ep.startswith('pases.evento') or ep == 'pases.imprimir_evento' }}"><span class="ico">★</span>Eventos</a>
+      {% endif %}
+      {{ opcion('bitacora', 'bitacora.lista', '☰', 'Bitácora', 'bitacora.lista') }}
+      {% if puede('bitacora') %}
+        <a href="{{ url_for('bitacora.asistencia') }}" class="{{ 'activo' if ep == 'bitacora.asistencia' }}"><span class="ico">⏱</span>Llegadas y salidas</a>
+      {% endif %}
+      {{ opcion('horarios', 'horarios.lista', '◷', 'Horarios y perfiles', 'horarios.') }}
+      {{ opcion('admin', 'admin.inicio', '⚙', 'Administración', 'admin.') }}
+    </nav>
+    <div class="usuario">
+      <b>{{ session.nombre }}</b>{{ NOMBRE_ROL.get(session.rol, '') }} · {{ session.usuario }}
+      <form method="post" action="{{ url_for('panel.salir') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button type="submit">Cerrar sesión</button>
+      </form>
+    </div>
+  </aside>
+  <div>
+    <div class="barra-movil no-imprimir">
+      <button type="button" onclick="document.getElementById('lateral').classList.toggle('abierta')" aria-label="Menú">☰</button>
+      <b>Control de Acceso ITVH</b>
+    </div>
+    <main class="principal">
+      {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}<div class="aviso {{ categoria }}">{{ mensaje }}</div>{% endfor %}
+      {% endwith %}
+      {% block contenido %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='vendor/qrcode.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

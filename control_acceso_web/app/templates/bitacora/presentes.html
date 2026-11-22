@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block titulo %}Dentro del campus{% endblock %}
+{% block contenido %}
+<h1>Dentro del campus ahora ({{ filas|length }})</h1>
+<p class="sub">Personas y pases cuya última lectura de hoy en un acceso perimetral fue una entrada.</p>
+<div class="tarjeta sin-relleno"><div class="tabla"><table>
+  <thead><tr><th>Persona</th><th>Tipo</th><th>Entró</th><th>Por</th></tr></thead>
+  <tbody>
+  {% for p in filas %}
+    <tr><td>{% if p.id_persona %}<a href="{{ url_for('personas.detalle', id_persona=p.id_persona) }}">{{ p.persona }}</a>{% else %}{{ p.persona }}{% endif %}
+            <div class="tenue">{{ p.detalle or '' }}</div></td>
+        <td>{{ p.tipo }}</td><td>{{ p.desde|hora }}</td><td>{{ p.punto }}</td></tr>
+  {% else %}
+    <tr><td colspan="4" class="tenue">No hay nadie registrado dentro.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

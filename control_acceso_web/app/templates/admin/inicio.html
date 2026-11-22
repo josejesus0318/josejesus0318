@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, boton_estado with context %}
+{% block titulo %}Administración{% endblock %}
+{% block contenido %}
+<h1>Administración</h1>
+<p class="sub">Usuarios de la aplicación, puntos de acceso, configuración y auditoría de cambios.</p>
+
+<div class="rejilla r3">
+  <section class="tarjeta sin-relleno" style="grid-column: span 2">
+    <h2>Usuarios de la aplicación</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Usuario</th><th>Rol</th><th>Último acceso</th><th></th></tr></thead>
+      <tbody>
+      {% for u in usuarios %}
+        <tr><td><b class="mono">{{ u.usuario }}</b><div class="tenue">{{ u.nombre }}</div></td>
+            <td>{{ roles[u.rol] }}{% if not u.activo %} <span class="etiqueta gris">Inactivo</span>{% endif %}</td>
+            <td>{{ u.ultimo_acceso|fecha }}</td>
+            <td class="acciones">
+              {% if u.id_usuario != session.id_usuario %}{{ boton_estado(url_for('admin.usuario_estado', id_usuario=u.id_usuario), u.activo, 'activo', confirmar_no='¿Desactivar este usuario?') }}{% endif %}
+              <form class="linea" method="post" action="{{ url_for('admin.usuario_password', id_usuario=u.id_usuario) }}">
+                {{ csrf() }}<input name="password" type="password" placeholder="Nueva contraseña" minlength="8" required style="width:150px;padding:.25rem .5rem">
+                <button class="btn chico">Cambiar</button></form>
+            </td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <form method="post" action="{{ url_for('admin.usuario_nuevo') }}" class="tarjeta">
+    <h2>Nuevo usuario</h2>
+    {{ csrf() }}
+    <div class="campo"><label>Usuario <span class="ayuda">(minúsculas, sin espacios)</span></label><input name="usuario" required pattern="[a-z0-9_.]{3,30}" maxlength="30"></div>
+    <div class="campo" style="margin-top:.7rem"><label>Nombre</label><input name="nombre" required maxlength="100"></div>
+    <div class="campo" style="margin-top:.7rem"><label>Rol</label><select name="rol">
+      {% for clave, nombre in roles.items() %}<option value="{{ clave }}">{{ nombre }}</option>{% endfor %}</select></div>
+    <div class="campo" style="margin-top:.7rem"><label>Contraseña <span class="ayuda">(mín. 8)</span></label><input name="password" type="password" minlength="8" required></div>
+    <button class="btn primario" style="margin-top:1rem">Crear</button>
+  </form>
+</div>
+
+<div class="rejilla r3">
+  <section class="tarjeta sin-relleno" style="grid-column: span 2">
+    <h2>Puntos de acceso</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Punto</th><th>Tipo</th><th>Sentido</th><th></th></tr></thead>
+      <tbody>
+      {% for p in puntos %}
+        <tr><td><b>{{ p.nombre }}</b>{% if not p.activo %} <span class="etiqueta gris">Desactivado</span>{% endif %}<div class="tenue">{{ p.ubicacion or '' }}</div></td>
+            <td>{{ 'Perímetro (entrada/salida del campus)' if p.perimetral else 'Área interna' }}</td>
+            <td>{{ p.sentido|capitalize }}</td>
+            <td>{{ boton_estado(url_for('admin.punto_estado', id_punto=p.id_punto), p.activo, 'activo', confirmar_no='¿Desactivar este punto? Nadie podrá entrar por ahí.') }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <div>
+    <form method="post" action="{{ url_for('admin.punto_nuevo') }}" class="tarjeta">
+      <h2>Nuevo punto de acceso</h2>
+      {{ csrf() }}
+      <div class="campo"><label>Nombre</label><input name="nombre" required maxlength="80"></div>
+      <div class="campo" style="margin-top:.7rem"><label>Ubicación</label><input name="ubicacion" maxlength="120"></div>
+      <div class="campo" style="margin-top:.7rem"><label>Sentido</label><select name="sentido">
+        <option value="ambos">Entrada y salida</option><option value="entrada">Solo entrada</option><option value="salida">Solo salida</option></select></div>
+      <label class="opciones" style="margin-top:.7rem"><label><input type="checkbox" name="perimetral" value="1" checked> Es entrada/salida del campus</label></label>
+      <button class="btn primario" style="margin-top:1rem">Crear</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.configuracion') }}" class="tarjeta">
+      <h2>Configuración</h2>
+      {{ csrf() }}
+      {% for c in config if c.clave in ('intentos_nip', 'segundos_repeticion') %}
+        <div class="campo" style="margin-bottom:.7rem"><label>{{ c.descripcion }}</label><input type="number" name="{{ c.clave }}" value="{{ c.valor }}" min="0" max="3600"></div>
+      {% endfor %}
+      <button class="btn">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<section class="tarjeta sin-relleno">
+  <h2>Auditoría de cambios</h2>
+  <div class="tabla"><table>
+    <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Registro</th><th>Detalle</th></tr></thead>
+    <tbody>
+    {% for a in auditoria %}
+      <tr><td>{{ a.fecha_hora|fecha }}</td><td class="mono">{{ a.usuario or '—' }}</td>
+          <td><span class="etiqueta {{ {'activar':'ok','desactivar':'mal','alta':'azul'}.get(a.accion,'gris') }}">{{ a.accion|capitalize }}</span></td>
+          <td>{{ a.tabla }} #{{ a.id_afectado }}</td><td class="tenue">{{ a.detalle or '' }}</td></tr>
+    {% else %}
+      <tr><td colspan="5" class="tenue">Sin cambios registrados.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

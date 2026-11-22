@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}Horarios y perfiles{% endblock %}
+{% block contenido %}
+<h1>Horarios y perfiles de acceso</h1>
+<p class="sub">Un <b>perfil</b> define por qué puertas se puede pasar y su horario por omisión. Un pase puede tener su propio horario.</p>
+
+<section class="tarjeta sin-relleno">
+  <h2>Perfiles</h2>
+  <div class="tabla"><table>
+    <thead><tr><th>Perfil</th><th>Horario</th><th>Puertas permitidas</th><th></th></tr></thead>
+    <tbody>
+    {% for p in perfiles %}
+      <tr><td><b>{{ p.nombre }}</b><div class="tenue">{{ p.descripcion or '' }}</div></td>
+          <td>{{ p.horario or 'Sin restricción' }}</td><td>{{ p.puntos or 'Ninguna' }}</td>
+          <td><a class="btn chico" href="{{ url_for('horarios.perfil', id_perfil=p.id_perfil) }}">Editar</a></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+
+<div class="rejilla r3">
+  <section class="tarjeta sin-relleno" style="grid-column: span 2">
+    <h2>Horarios programados</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Horario</th><th>Franjas</th><th>En uso</th></tr></thead>
+      <tbody>
+      {% for h in horarios %}
+        <tr><td><a href="{{ url_for('horarios.detalle', id_horario=h.id_horario) }}">{{ h.nombre }}</a><div class="tenue">{{ h.descripcion or '' }}</div></td>
+            <td>{{ h.franjas or 'Sin franjas (no permite entrar)' }}</td>
+            <td class="tenue">{{ h.perfiles }} perfil(es) · {{ h.credenciales }} pase(s)</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <form method="post" action="{{ url_for('horarios.nuevo') }}" class="tarjeta">
+    <h2>Nuevo horario</h2>
+    {{ csrf() }}
+    <div class="campos">
+      <div class="campo ancho"><label>Nombre</label><input name="nombre" required maxlength="60" placeholder="Ej. Turno vespertino"></div>
+      <div class="campo ancho"><label>Descripción</label><input name="descripcion" maxlength="200"></div>
+      {% include "horarios/_dias.html" %}
+    </div>
+    <button class="btn primario" style="margin-top:1rem">Crear</button>
+  </form>
+</div>
+{% endblock %}

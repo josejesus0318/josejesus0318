@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "macros.html" import resultado, metodo with context %}
+{% block titulo %}Caseta{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Caseta de vigilancia</h1><p class="sub">Registre entradas y salidas con QR, NIP o de forma manual.</p></div>
+  <div class="campo" style="min-width:260px">
+    <label for="punto">Punto de acceso</label>
+    <select id="punto">
+      {% for p in puntos %}
+        <option value="{{ p.id_punto }}" {{ 'selected' if p.id_punto == punto }}>{{ p.nombre }}{{ '' if p.perimetral else ' (área interna)' }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+
+<div class="caseta">
+  <section class="tarjeta">
+    <div class="pestanas" role="tablist">
+      <button type="button" class="activa" data-pestana="camara">Cámara (QR)</button>
+      <button type="button" data-pestana="codigo">Teclear código</button>
+      <button type="button" data-pestana="nip">No. control + NIP</button>
+      <button type="button" data-pestana="manual">Manual</button>
+    </div>
+
+    <div data-panel="camara">
+      <div id="lector"></div>
+      <div class="acciones" style="margin-top:.8rem">
+        <button type="button" class="btn primario" id="btn-camara">Iniciar cámara</button>
+        <span class="tenue" id="estado-camara">Apunte la cámara al código QR del pase.</span>
+      </div>
+    </div>
+
+    <form data-panel="codigo" class="oculto" id="form-codigo" autocomplete="off">
+      <div class="campo">
+        <label for="codigo">Código del pase</label>
+        <input id="codigo" placeholder="ITVH-…" class="mono" required>
+        <span class="ayuda">También funciona con lectores QR de mano (USB) que escriben el código y presionan Enter.</span>
+      </div>
+      <button class="btn primario" style="margin-top:.8rem">Registrar</button>
+    </form>
+
+    <form data-panel="nip" class="oculto" id="form-nip" autocomplete="off">
+      <div class="campos">
+        <div class="campo"><label for="numero">Número de control o de empleado</label><input id="numero" required inputmode="text"></div>
+        <div class="campo"><label for="nip">NIP</label><input id="nip" type="password" inputmode="numeric" maxlength="6" required></div>
+      </div>
+      <p class="ayuda">Para quien olvidó su credencial: entra con su número y su NIP personal.</p>
+      <button class="btn primario">Registrar</button>
+    </form>
+
+    <div data-panel="manual" class="oculto">
+      <div class="campo">
+        <label for="buscar">Buscar persona</label>
+        <input id="buscar" type="search" placeholder="Nombre, número de control, empleado o empresa" autocomplete="off">
+        <span class="ayuda">El vigilante verifica la identificación y registra el movimiento. Se aplican las mismas reglas de horario y vigencia.</span>
+      </div>
+      <ul class="lista-busqueda oculto" id="resultados-busqueda"></ul>
+    </div>
+  </section>
+
+  <div>
+    <section class="resultado" id="resultado" aria-live="assertive">
+      <div class="icono">⌖</div>
+      <div class="grande">Listo para leer</div>
+      <div class="tenue">El resultado aparecerá aquí.</div>
+    </section>
+
+    <section class="tarjeta sin-relleno" style="margin-top:1.25rem">
+      <h2>Movimientos de hoy</h2>
+      <div class="tabla"><table>
+        <thead><tr><th>Hora</th><th>Persona</th><th>Resultado</th></tr></thead>
+        <tbody id="ultimos">
+        {% for m in ultimos %}
+          <tr><td>{{ m.hora|hora }}</td><td>{{ m.persona }}<div class="tenue">{{ m.punto }} · {{ metodo(m.metodo) }}</div></td>
+              <td>{{ resultado(m) }}{% if m.motivo %}<div class="tenue">{{ m.motivo }}</div>{% endif %}</td></tr>
+        {% else %}
+          <tr><td colspan="3" class="tenue">Sin movimientos hoy.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/html5-qrcode.min.js') }}"></script>
+<script>
+  window.CASETA = {
+    registrar: "{{ url_for('caseta.registrar') }}",
+    buscar: "{{ url_for('caseta.buscar') }}"
+  };
+</script>
+<script src="{{ url_for('static', filename='js/caseta.js') }}"></script>
+{% endblock %}

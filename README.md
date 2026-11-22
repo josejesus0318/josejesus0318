@@ -60,6 +60,16 @@ erDiagram
 - Un `CHECK` de exclusividad en `credenciales` garantiza un único titular por QR.
 - `ON DELETE CASCADE` solo en `registro_accesos` hacia `credenciales`.
 
+## Aplicación web en la nube – Campus ITVH (versión actual)
+
+La carpeta [`control_acceso_web/`](control_acceso_web/) contiene la **versión web** del sistema, enfocada al **Instituto Tecnológico de Villahermosa**:
+- **Tecnología:** Flask + PostgreSQL, publicada en la nube con Render y Neon.
+- **Formas de entrar:** código QR, NIP o registro manual.
+- **Pases:** con caducidad, de un solo uso, personales o genéricos (eventos y cuadrillas).
+- **Control:** horarios de acceso programado, llegadas y salidas, activar o desactivar, y auditoría.
+
+Consulten su [README](control_acceso_web/README.md) y la [Guía de despliegue en la nube](control_acceso_web/GUIA_DESPLIEGUE.md).
+
 ## Aplicación de escritorio (modelo v2)
 
 La carpeta [`control_acceso_qr/`](control_acceso_qr/) contiene la **aplicación de escritorio en Python (PyQt6)** con lector QR por cámara web. Usa el **modelo v2 de 18 tablas** (base `grupo_solutions_v2`), que evoluciona el modelo de 9 tablas de las actividades.
@@ -78,6 +88,8 @@ sql/                           Modelo v1 (9 tablas) – actividades de la materi
 ├── 05_seguridad.sql           Usuarios, roles y privilegios (Actividad 3.1)
 └── 99_limpiar_seguridad.sql   Elimina usuarios y roles para volver a empezar
 control_acceso_qr/             Aplicación de escritorio + modelo v2 (18 tablas)
+control_acceso_web/            Aplicación web en la nube – Campus ITVH (20 tablas)
+render.yaml                    Configuración de despliegue en Render
 docs/                          Reportes técnicos y resumen del proyecto (.docx)
 ```
 

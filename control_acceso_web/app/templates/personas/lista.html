@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "macros.html" import estado_credencial with context %}
+{% block titulo %}Personas{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Personas</h1><p class="sub">Alumnos, docentes, personal, proveedores y visitantes.</p></div>
+  {% if puede('personas_editar') %}<a class="btn primario" href="{{ url_for('personas.nueva') }}">+ Registrar persona</a>{% endif %}
+</div>
+<form class="filtros" method="get">
+  <div class="campo"><label>Buscar</label><input type="search" name="q" value="{{ q }}" placeholder="Nombre, número, carrera…"></div>
+  <div class="campo"><label>Tipo</label>
+    <select name="tipo"><option value="">Todos</option>
+      {% for t in tipos %}<option value="{{ t.clave }}" {{ 'selected' if t.clave == tipo }}>{{ t.nombre }}</option>{% endfor %}
+    </select></div>
+  <div class="campo"><label>Estado</label>
+    <select name="estado">
+      <option value="activos" {{ 'selected' if estado == 'activos' }}>Activos</option>
+      <option value="bajas" {{ 'selected' if estado == 'bajas' }}>Dados de baja</option>
+      <option value="todos" {{ 'selected' if estado == 'todos' }}>Todos</option>
+    </select></div>
+  <button class="btn">Filtrar</button>
+</form>
+<div class="tarjeta sin-relleno"><div class="tabla"><table>
+  <thead><tr><th>Nombre</th><th>Tipo</th><th>Número</th><th>Carrera / área / empresa</th><th>Credencial</th></tr></thead>
+  <tbody>
+  {% for p in personas %}
+    <tr>
+      <td><a href="{{ url_for('personas.detalle', id_persona=p.id_persona) }}">{{ p.nombre_completo }}</a>
+          {% if not p.activo %}<span class="etiqueta mal">Baja</span>{% endif %}</td>
+      <td>{{ p.tipo }}</td>
+      <td class="mono">{{ p.numero or p.identificacion or '—' }}</td>
+      <td>{{ p.adscripcion or '—' }}{% if p.semestre %}<div class="tenue">{{ p.semestre }}.º semestre</div>{% endif %}</td>
+      <td>{% if p.credencial %}{{ estado_credencial(p.credencial) }}{% else %}<span class="tenue">Sin credencial</span>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5" class="tenue">No hay personas con esos filtros.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

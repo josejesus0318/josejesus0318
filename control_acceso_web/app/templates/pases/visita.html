@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}Pase de visita o proveedor{% endblock %}
+{% block contenido %}
+<h1>Pase de visita o proveedor</h1>
+<p class="sub">Registra a la persona, su visita y un código QR con fecha de caducidad en un solo paso.</p>
+<form method="post" class="tarjeta" style="max-width:920px">
+  {{ csrf() }}
+  <fieldset>
+    <legend>¿Quién viene?</legend>
+    <div class="opciones" style="margin-bottom:.9rem">
+      <label><input type="radio" name="clase" value="VIS" checked> Visitante</label>
+      <label><input type="radio" name="clase" value="PRV"> Proveedor / contratista</label>
+    </div>
+    <div class="campo" style="margin-bottom:.9rem">
+      <label>¿Ya vino antes?</label>
+      <select name="id_persona" id="id_persona">
+        <option value="">No, registrar a una persona nueva</option>
+        {% for p in externos %}<option value="{{ p.id_persona }}" data-clase="{{ p.tipo_clave }}">{{ p.nombre_completo }} · {{ p.tipo }}{{ ' · ' ~ p.adscripcion if p.adscripcion }}</option>{% endfor %}
+      </select>
+    </div>
+    <div id="nueva-persona">
+      <div class="campos">
+        <div class="campo"><label>Nombre(s)</label><input name="nombre" maxlength="60" data-requerido="1"></div>
+        <div class="campo"><label>Apellido paterno</label><input name="apellido_paterno" maxlength="40" data-requerido="1"></div>
+        <div class="campo"><label>Apellido materno</label><input name="apellido_materno" maxlength="40"></div>
+        <div class="campo"><label>Identificación oficial</label><input name="identificacion" maxlength="40" placeholder="INE, pasaporte…"></div>
+        <div class="campo"><label>Teléfono</label><input name="telefono" maxlength="15"></div>
+        <div class="campo"><label>Correo <span class="ayuda">(para enviarle el QR)</span></label><input name="correo" type="email" maxlength="120"></div>
+      </div>
+      <div class="campos" data-mostrar-si="clase=PRV" style="margin-top:.9rem">
+        <div class="campo"><label>Empresa</label><select name="id_empresa"><option value="">— Elegir —</option>
+          {% for e in empresas %}<option value="{{ e.id_empresa }}">{{ e.nombre }}</option>{% endfor %}</select></div>
+        <div class="campo"><label>…o empresa nueva</label><input name="empresa_nueva" maxlength="120"></div>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Visita</legend>
+    <div class="campos">
+      <div class="campo ancho"><label>Motivo</label><input name="motivo" required maxlength="200" placeholder="Ej. Entrega de garrafones, entrevista, reunión"></div>
+      <div class="campo"><label>Anfitrión <span class="ayuda">(a quién visita)</span></label>
+        <select name="id_anfitrion"><option value="">— Ninguno —</option>
+          {% for a in anfitriones %}<option value="{{ a.id_persona }}">{{ a.nombre_completo }} · {{ a.adscripcion }}</option>{% endfor %}
+        </select></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Código QR</legend>
+    <div class="campos">
+      <div class="campo"><label>Válido desde</label><input type="datetime-local" name="vigencia_inicio" value="{{ hoy }}T07:00" required></div>
+      <div class="campo"><label>Caduca</label><input type="datetime-local" name="vigencia_fin" value="{{ hoy }}T20:00" required></div>
+      <div class="campo"><label>Horario <span class="ayuda">(opcional)</span></label>
+        <select name="id_horario"><option value="">El del perfil (visitas: L–V 8–18 h; proveedores: L–V 8–13 h)</option>
+          {% for h in horarios %}<option value="{{ h.id_horario }}">{{ h.nombre }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <label class="opciones" style="margin-top:.9rem"><label><input type="checkbox" name="un_solo_uso" value="1" checked> QR de un solo uso (solo permite una entrada; la salida siempre se permite)</label></label>
+  </fieldset>
+  <div class="acciones">
+    <button class="btn primario">Crear pase</button>
+    <a class="btn" href="{{ url_for('credenciales.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var sel = document.getElementById('id_persona'), bloque = document.getElementById('nueva-persona');
+  function actualizar() {
+    var existente = !!sel.value;
+    bloque.classList.toggle('oculto', existente);
+    bloque.querySelectorAll('[data-requerido]').forEach(function (i) { i.required = !existente; });
+    if (existente) {
+      var clase = sel.options[sel.selectedIndex].dataset.clase;
+      document.querySelector('input[name=clase][value=' + clase + ']').checked = true;
+    }
+  }
+  sel.addEventListener('change', actualizar);
+  actualizar();
+})();
+</script>
+{% endblock %}

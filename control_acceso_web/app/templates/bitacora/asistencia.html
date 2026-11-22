@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Llegadas y salidas{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Llegadas y salidas</h1><p class="sub">Hora de llegada (primera entrada) y de salida (última salida) de cada persona por día.</p></div>
+  <a class="btn" href="{{ request.full_path }}{{ '&' if '?' in request.full_path else '?' }}formato=csv">Descargar CSV</a>
+</div>
+<form class="filtros" method="get">
+  <div class="campo"><label>Desde</label><input type="date" name="desde" value="{{ desde }}"></div>
+  <div class="campo"><label>Hasta</label><input type="date" name="hasta" value="{{ hasta }}"></div>
+  <div class="campo"><label>Tipo</label><select name="tipo"><option value="">Todos</option>
+    {% for t in tipos %}<option {{ 'selected' if f.tipo == t.nombre }}>{{ t.nombre }}</option>{% endfor %}</select></div>
+  <div class="campo"><label>Buscar</label><input type="search" name="q" value="{{ f.q or '' }}" placeholder="Nombre o número"></div>
+  <button class="btn">Filtrar</button>
+</form>
+<div class="tarjeta sin-relleno"><div class="tabla"><table>
+  <thead><tr><th>Fecha</th><th>Persona</th><th>Llegada</th><th>Salida</th><th>Tiempo en el campus</th><th>Entradas</th></tr></thead>
+  <tbody>
+  {% for a in filas %}
+    <tr><td>{{ a.fecha|fecha }}</td>
+        <td><a href="{{ url_for('personas.detalle', id_persona=a.id_persona) }}">{{ a.persona }}</a><div class="tenue">{{ a.tipo }}{{ ' · ' ~ a.numero if a.numero }}</div></td>
+        <td>{{ a.hora_llegada|hora }}</td>
+        <td>{% if a.estado == 'dentro' %}<span class="etiqueta ok">Dentro</span>{% else %}{{ a.hora_salida|hora }}{% endif %}</td>
+        <td>{{ a.tiempo_en_campus|duracion }}</td><td>{{ a.entradas }}</td></tr>
+  {% else %}
+    <tr><td colspan="6" class="tenue">Sin registros en ese periodo.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

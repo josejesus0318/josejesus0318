@@ -1,0 +1,32 @@
+{% macro estado_credencial(estado) -%}
+  {%- set e = ESTADOS_CREDENCIAL.get(estado, (estado, 'gris')) -%}
+  <span class="etiqueta {{ e[1] }}">{{ e[0] }}</span>
+{%- endmacro %}
+
+{% macro resultado(r) -%}
+  {%- if r.resultado == 'permitido' -%}
+    <span class="etiqueta ok">{{ 'Entrada' if r.evento == 'entrada' else 'Salida' }}</span>
+  {%- else -%}
+    <span class="etiqueta mal">Denegado</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro metodo(m) -%}
+  <span class="etiqueta azul">{{ {'qr': 'QR', 'nip': 'NIP', 'manual': 'Manual'}.get(m, m) }}</span>
+{%- endmacro %}
+
+{% macro usos(c) -%}
+  {%- if c.usos_maximos is none -%}Ilimitados
+  {%- elif c.usos_maximos == 1 -%}Un solo uso {{ '(usado)' if c.usos_realizados else '(sin usar)' }}
+  {%- else -%}{{ c.usos_realizados }} de {{ c.usos_maximos }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro csrf() -%}<input type="hidden" name="csrf" value="{{ csrf_token() }}">{%- endmacro %}
+
+{% macro boton_estado(url, activo, campo, si='Activar', no='Desactivar', confirmar_no='¿Desactivar? Ya no permitirá entrar.') -%}
+  <form class="linea" method="post" action="{{ url }}" {% if activo %}data-confirmar="{{ confirmar_no }}"{% endif %}>
+    {{ csrf() }}<input type="hidden" name="{{ campo }}" value="{{ '0' if activo else '1' }}">
+    <button class="btn chico {{ 'peligro' if activo else 'exito' }}">{{ no if activo else si }}</button>
+  </form>
+{%- endmacro %}

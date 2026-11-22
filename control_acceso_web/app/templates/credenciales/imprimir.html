@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Imprimir pases · Control de Acceso ITVH</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body style="background:#fff">
+  <div class="no-imprimir acciones" style="padding:1rem;justify-content:center">
+    <button class="btn primario" onclick="window.print()">Imprimir</button>
+    <a class="btn" href="javascript:history.back()">Regresar</a>
+    <span class="tenue">{{ creds|length }} pase(s). Tamaño credencial: 86 × 54 mm.</span>
+  </div>
+  <div class="hoja">
+    {% for c in creds %}
+    <div class="gafete">
+      <div class="info">
+        <div class="cabecera"><b>{{ INSTITUCION }}</b><br>Control de acceso</div>
+        <div class="titular">{{ c.titular }}</div>
+        <div>{{ c.tipo_titular }}{% if c.numero %} · {{ c.numero }}{% endif %}</div>
+        {% if c.evento %}<small>{{ c.evento }}</small>{% endif %}
+        <small>
+          {% if c.vigencia_fin %}Válido hasta {{ c.vigencia_fin|fecha }}{% else %}Vigente{% endif %}
+          {% if c.usos_maximos == 1 %} · Un solo uso{% elif c.usos_maximos %} · {{ c.usos_maximos }} usos{% endif %}
+        </small>
+        <div class="pie mono">{{ c.token }}</div>
+      </div>
+      <div class="qr" data-qr="{{ c.token }}" data-tam="104"></div>
+    </div>
+    {% else %}
+      <p>No hay pases vigentes para imprimir.</p>
+    {% endfor %}
+  </div>
+  <script src="{{ url_for('static', filename='vendor/qrcode.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

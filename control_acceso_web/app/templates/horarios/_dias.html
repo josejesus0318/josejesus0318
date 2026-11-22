@@ -1,0 +1,6 @@
+<div class="campo ancho"><label>Días</label>
+  <div class="opciones">
+    {% for d in DIAS %}<label><input type="checkbox" name="dias" value="{{ loop.index }}" {{ 'checked' if loop.index <= 5 }}> {{ d }}</label>{% endfor %}
+  </div></div>
+<div class="campo"><label>Desde</label><input type="time" name="hora_inicio" value="08:00" required></div>
+<div class="campo"><label>Hasta</label><input type="time" name="hora_fin" value="16:00" required></div>

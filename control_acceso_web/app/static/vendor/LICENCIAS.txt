@@ -1,0 +1,6 @@
+Librerías de terceros incluidas en esta carpeta:
+
+qrcode.min.js        QRCode.js de davidshimjs (https://github.com/davidshimjs/qrcodejs)
+                     Licencia MIT. Copyright (c) 2012 davidshimjs.
+html5-qrcode.min.js  html5-qrcode 2.3.8 de mebjas (https://github.com/mebjas/html5-qrcode)
+                     Licencia Apache 2.0.

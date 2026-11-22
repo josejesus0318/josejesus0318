@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión · Control de Acceso ITVH</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body class="login">
+  <form class="tarjeta" method="post">
+    <div class="marca">
+      <div class="logo">ITVH</div>
+      <div><b>Control de Acceso</b><small>{{ INSTITUCION }}</small></div>
+    </div>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensaje in mensajes %}<div class="aviso {{ categoria }}">{{ mensaje }}</div>{% endfor %}
+    {% endwith %}
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div class="campo" style="margin-bottom:.9rem">
+      <label for="usuario">Usuario</label>
+      <input id="usuario" name="usuario" value="{{ usuario or '' }}" autocomplete="username" required autofocus>
+    </div>
+    <div class="campo" style="margin-bottom:1.2rem">
+      <label for="password">Contraseña</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn primario" style="width:100%;justify-content:center">Entrar</button>
+  </form>
+</body>
+</html>

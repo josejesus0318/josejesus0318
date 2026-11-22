@@ -1,0 +1,24 @@
+{# Campos compartidos por "nueva credencial" y "editar credencial" #}
+<div class="campos">
+  <div class="campo"><label>Perfil de acceso <span class="ayuda">(qué puertas puede usar)</span></label>
+    <select name="id_perfil" required>
+      {% for p in perfiles %}<option value="{{ p.id_perfil }}" {{ 'selected' if p.id_perfil == perfil_actual or p.nombre == perfil_actual }}>{{ p.nombre }}{{ ' · ' ~ p.horario if p.horario }}</option>{% endfor %}
+    </select></div>
+  <div class="campo"><label>Horario programado</label>
+    <select name="id_horario">
+      <option value="">El del perfil</option>
+      {% for h in horarios %}<option value="{{ h.id_horario }}" {{ 'selected' if h.id_horario == horario_actual }}>{{ h.nombre }}</option>{% endfor %}
+    </select>
+    <span class="ayuda">Solo si este pase necesita días u horas distintas a las de su perfil.</span></div>
+  <div class="campo"><label>Válido desde</label><input type="datetime-local" name="vigencia_inicio" value="{{ inicio_actual }}" {{ 'required' if requiere_inicio }}></div>
+  <div class="campo"><label>Caduca <span class="ayuda">(vacío = sin caducidad)</span></label><input type="datetime-local" name="vigencia_fin" value="{{ fin_actual }}"></div>
+  <div class="campo ancho"><label>Usos permitidos</label>
+    <div class="opciones">
+      <label><input type="radio" name="usos" value="ilimitado" {{ 'checked' if usos_actual is none }}> Ilimitados</label>
+      <label><input type="radio" name="usos" value="uno" {{ 'checked' if usos_actual == 1 }}> Un solo uso</label>
+      <label><input type="radio" name="usos" value="varios" {{ 'checked' if usos_actual and usos_actual > 1 }}> Número de usos:</label>
+      <input type="number" name="usos_numero" min="1" style="width:110px" value="{{ usos_actual if usos_actual and usos_actual > 1 else '' }}">
+    </div>
+    <span class="ayuda">Cada entrada al campus descuenta un uso; las salidas no.</span>
+  </div>
+</div>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "macros.html" import estado_credencial, usos, boton_estado with context %}
+{% block titulo %}Credenciales{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Credenciales y pases</h1><p class="sub">Códigos QR personales y genéricos, con su vigencia, horario y usos.</p></div>
+  {% if puede('credenciales_editar') %}
+  <div class="acciones">
+    <a class="btn" href="{{ url_for('credenciales.nueva', tipo='generica') }}">+ Pase genérico</a>
+    <a class="btn primario" href="{{ url_for('credenciales.nueva') }}">+ Credencial personal</a>
+  </div>
+  {% endif %}
+</div>
+<form class="filtros" method="get">
+  <div class="campo"><label>Buscar</label><input type="search" name="q" value="{{ q }}" placeholder="Titular, número o código"></div>
+  <div class="campo"><label>Estado</label><select name="estado"><option value="">Todos</option>
+    {% for clave, e in ESTADOS_CREDENCIAL.items() %}<option value="{{ clave }}" {{ 'selected' if clave == estado }}>{{ e[0] }}</option>{% endfor %}
+  </select></div>
+  <div class="campo"><label>Tipo</label><select name="tipo"><option value="">Todos</option>
+    <option value="personal" {{ 'selected' if tipo == 'personal' }}>Personal</option>
+    <option value="generica" {{ 'selected' if tipo == 'generica' }}>Genérico / compartido</option>
+  </select></div>
+  <button class="btn">Filtrar</button>
+</form>
+<div class="tarjeta sin-relleno"><div class="tabla"><table>
+  <thead><tr><th>Titular</th><th>Perfil y horario</th><th>Vigencia</th><th>Usos</th><th>Estado</th><th></th></tr></thead>
+  <tbody>
+  {% for c in creds %}
+    <tr>
+      <td><a href="{{ url_for('credenciales.detalle', id_credencial=c.id_credencial) }}">{{ c.titular }}</a>
+          <div class="tenue">{{ c.tipo_titular }}{% if c.numero %} · {{ c.numero }}{% endif %}{% if c.evento %} · {{ c.evento }}{% endif %}</div></td>
+      <td>{{ c.perfil }}<div class="tenue">{{ c.horario or 'Sin restricción de horario' }}</div></td>
+      <td>{{ c.vigencia_inicio|fecha }}<div class="tenue">{{ 'hasta ' ~ c.vigencia_fin|fecha if c.vigencia_fin else 'sin caducidad' }}</div></td>
+      <td>{{ usos(c) }}</td>
+      <td>{{ estado_credencial(c.estado) }}</td>
+      <td>{% if puede('credenciales_estado') %}{{ boton_estado(url_for('credenciales.estado', id_credencial=c.id_credencial), c.activa, 'activa') }}{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="tenue">No hay credenciales con esos filtros.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

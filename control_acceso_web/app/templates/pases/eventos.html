@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block titulo %}Eventos{% endblock %}
+{% block contenido %}
+<h1>Eventos</h1>
+<p class="sub">Pases genéricos (sin nombre) para conferencias, ferias, graduaciones o grupos invitados.</p>
+<div class="rejilla r3">
+  <section class="tarjeta sin-relleno" style="grid-column: span 2">
+    <h2>Eventos registrados</h2>
+    <div class="tabla"><table>
+      <thead><tr><th>Evento</th><th>Fechas</th><th>Pases</th><th>Entradas</th></tr></thead>
+      <tbody>
+      {% for e in eventos %}
+        <tr><td><a href="{{ url_for('pases.evento', id_evento=e.id_evento) }}">{{ e.nombre }}</a><div class="tenue">{{ e.lugar or '' }}</div></td>
+            <td>{{ e.inicio|fecha }}<div class="tenue">al {{ e.fin|fecha }}</div></td>
+            <td>{{ e.pases }}{% if e.cupo %}<div class="tenue">cupo {{ e.cupo }}</div>{% endif %}</td>
+            <td>{{ e.entradas }}</td></tr>
+      {% else %}
+        <tr><td colspan="4" class="tenue">Todavía no hay eventos.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  <form method="post" action="{{ url_for('pases.evento_nuevo') }}" class="tarjeta">
+    <h2>Nuevo evento</h2>
+    {{ csrf() }}
+    <div class="campo"><label>Nombre</label><input name="nombre" required maxlength="120"></div>
+    <div class="campo" style="margin-top:.7rem"><label>Lugar</label><input name="lugar" maxlength="120" placeholder="Auditorio principal"></div>
+    <div class="campo" style="margin-top:.7rem"><label>Inicio</label><input type="datetime-local" name="inicio" required></div>
+    <div class="campo" style="margin-top:.7rem"><label>Fin</label><input type="datetime-local" name="fin" required></div>
+    <div class="campo" style="margin-top:.7rem"><label>Cupo <span class="ayuda">(opcional)</span></label><input type="number" name="cupo" min="1"></div>
+    <button class="btn primario" style="margin-top:1rem">Crear evento</button>
+  </form>
+</div>
+{% endblock %}

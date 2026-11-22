@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "macros.html" import resultado, metodo, estado_credencial with context %}
+{% block titulo %}Panel{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Panel del día</h1><p class="sub">Movimientos de hoy en el campus.</p></div>
+  <div class="acciones">
+    {% if puede('caseta') %}<a class="btn primario" href="{{ url_for('caseta.inicio') }}">Abrir caseta</a>{% endif %}
+    {% if puede('pases') %}<a class="btn" href="{{ url_for('pases.visita') }}">Nuevo pase de visita</a>{% endif %}
+  </div>
+</div>
+
+<div class="cifras">
+  <a class="cifra destacada" href="{{ url_for('bitacora.presentes') }}"><span>Dentro del campus</span><b>{{ resumen.dentro_ahora }}</b></a>
+  <div class="cifra"><span>Entradas hoy</span><b>{{ resumen.entradas }}</b></div>
+  <div class="cifra"><span>Salidas hoy</span><b>{{ resumen.salidas }}</b></div>
+  <div class="cifra"><span>Accesos denegados</span><b>{{ resumen.denegados }}</b></div>
+  <div class="cifra"><span>Por QR · NIP · manual</span><b style="font-size:1.25rem;padding-top:.45rem">{{ resumen.por_qr }} · {{ resumen.por_nip }} · {{ resumen.manuales }}</b></div>
+</div>
+
+<div class="rejilla r2">
+  <section class="tarjeta sin-relleno">
+    <h2>Últimos movimientos</h2>
+    {% if movimientos %}
+    <div class="tabla"><table>
+      <thead><tr><th>Hora</th><th>Persona</th><th>Resultado</th></tr></thead>
+      <tbody>
+      {% for m in movimientos %}
+        <tr>
+          <td>{{ m.hora|hora }}{% if m.fecha != hoy %}<div class="tenue">{{ m.fecha|fecha }}</div>{% endif %}</td>
+          <td>{{ m.persona }}<div class="tenue">{{ m.tipo ~ ' · ' if m.tipo }}{{ m.punto }}</div></td>
+          <td>{{ resultado(m) }} {{ metodo(m.metodo) }}{% if m.motivo %}<div class="tenue">{{ m.motivo }}</div>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="vacio">Sin movimientos todavía.</p>{% endif %}
+  </section>
+
+  <div>
+    <section class="tarjeta sin-relleno">
+      <h2>Dentro del campus ahora</h2>
+      {% if presentes %}
+      <div class="tabla"><table>
+        <thead><tr><th>Persona</th><th>Desde</th></tr></thead>
+        <tbody>
+        {% for p in presentes %}
+          <tr><td>{{ p.persona }}<div class="tenue">{{ p.tipo }}{% if p.detalle %} · {{ p.detalle }}{% endif %}</div></td>
+              <td>{{ p.desde|hora }}<div class="tenue">{{ p.punto }}</div></td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<p class="vacio">Nadie ha registrado entrada hoy.</p>{% endif %}
+    </section>
+
+    {% if alertas %}
+    <section class="tarjeta">
+      <h2>Pases que vencen pronto</h2>
+      {% for c in alertas %}
+        <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-bottom:1px solid var(--borde)">
+          <a href="{{ url_for('credenciales.detalle', id_credencial=c.id_credencial) }}">{{ c.titular }}</a>
+          <span class="tenue">vence {{ c.vigencia_fin|fecha }}</span>
+        </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
