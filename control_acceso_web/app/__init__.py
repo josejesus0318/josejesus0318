@@ -42,6 +42,7 @@ def create_app(config: dict | None = None) -> Flask:
     )
     if config:
         app.config.update(config)
+    app.config["DATABASE_URL"] = db.limpiar_url(app.config["DATABASE_URL"])
     if not os.environ.get("SECRET_KEY") and not (config or {}).get("SECRET_KEY"):
         app.logger.warning("SECRET_KEY no está definida: las sesiones se cerrarán al reiniciar el servidor.")
     if not app.config["DATABASE_URL"]:

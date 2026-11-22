@@ -6,6 +6,7 @@ del usuario, así que no hay inyección SQL.
 """
 from __future__ import annotations
 
+import re
 from contextlib import contextmanager
 from typing import Any, Iterator
 
@@ -38,9 +39,33 @@ def traducir(e: psycopg.Error) -> ErrorBD:
         texto = e.diag.message_primary if e.diag else str(e)
         return ErrorBD(texto)
     if isinstance(e, psycopg.OperationalError):
+        detalle = detalle_tecnico(e)
+        try:
+            current_app.logger.error("Error de conexión con PostgreSQL: %s", detalle)
+        except RuntimeError:
+            pass
         return ErrorBD("No fue posible conectar con la base de datos. Si es la primera visita del día, "
-                       "espere unos segundos y vuelva a intentar.")
+                       f"espere unos segundos y vuelva a intentar. Detalle técnico: {detalle}")
+    if estado == "42P01":
+        return ErrorBD("Faltan las tablas del sistema: ejecute los scripts de la carpeta database "
+                       "(paso 2 de la guía de despliegue).")
     return ErrorBD(MENSAJES.get(estado, "Ocurrió un error en la base de datos."))
+
+
+def detalle_tecnico(e: Exception) -> str:
+    """Primera línea del error, sin contraseñas."""
+    texto = " ".join(str(e).split())[:300]
+    return re.sub(r"(://[^:/@\s]+:)[^@\s]+@", r"\1***@", texto) or e.__class__.__name__
+
+
+def limpiar_url(url: str) -> str:
+    """Corrige errores comunes al pegar la cadena de Neon en Render (comillas, 'psql', 'DATABASE_URL=')."""
+    url = (url or "").strip()
+    if url.lower().startswith("psql "):
+        url = url[5:].strip()
+    if url.upper().startswith("DATABASE_URL="):
+        url = url.split("=", 1)[1].strip()
+    return url.strip().strip('"').strip("'").strip()
 
 
 def init_app(app: Flask) -> None:
@@ -56,8 +81,12 @@ def conexion() -> psycopg.Connection:
         except psycopg.Error as e:
             raise traducir(e) from e
         zona = current_app.config["ZONA_HORARIA"]
-        conn.execute("SELECT set_config('search_path', 'campus, public', false), "
-                     "set_config('TimeZone', %s, false)", (zona,))
+        try:
+            conn.execute("SELECT set_config('search_path', 'campus, public', false), "
+                         "set_config('TimeZone', %s, false)", (zona,))
+        except psycopg.Error as e:
+            conn.close()
+            raise traducir(e) from e
         g.conn = conn
     return g.conn
 

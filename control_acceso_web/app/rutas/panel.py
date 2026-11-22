@@ -36,6 +36,26 @@ def login():
     return render_template("login.html")
 
 
+@bp.route("/salud")
+def salud():
+    """Diagnóstico sin iniciar sesión: ¿hay conexión con PostgreSQL y están instaladas las tablas?"""
+    from urllib.parse import urlsplit
+
+    from flask import current_app
+
+    partes = urlsplit(current_app.config["DATABASE_URL"])
+    info = {"servidor": partes.hostname, "base": partes.path.lstrip("/"), "usuario": partes.username}
+    try:
+        fila = db.uno("SELECT version() AS version, current_user AS usuario, "
+                      "to_regclass('campus.personas') IS NOT NULL AS tablas")
+    except db.ErrorBD as e:
+        return {"base_de_datos": "error", "detalle": str(e), **info}, 503
+    info.update(base_de_datos="ok", postgres=fila["version"].split(",")[0], tablas_instaladas=fila["tablas"])
+    if fila["tablas"]:
+        info["usuarios_app"] = db.uno("SELECT count(*) AS n FROM campus.usuarios")["n"]
+    return info, (200 if fila["tablas"] else 503)
+
+
 @bp.route("/salir", methods=["POST"])
 def salir():
     session.clear()
