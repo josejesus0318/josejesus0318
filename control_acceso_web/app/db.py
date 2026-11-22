@@ -72,8 +72,14 @@ def init_app(app: Flask) -> None:
     app.teardown_appcontext(cerrar)
 
 
+EJEMPLOS = ("ep-algo-123456", "ep-xxxx", "usuario:contraseña@")
+
+
 def conexion() -> psycopg.Connection:
     if "conn" not in g:
+        if any(x in current_app.config["DATABASE_URL"] for x in EJEMPLOS):
+            raise ErrorBD("DATABASE_URL todavía tiene la cadena de EJEMPLO de la guía. En Render vaya a "
+                          "Environment y pegue la cadena real que muestra Neon en el botón Connect.")
         try:
             # prepare_threshold=None: sin sentencias preparadas, compatible con el pooler de Neon
             conn = psycopg.connect(current_app.config["DATABASE_URL"], autocommit=True,

@@ -30,10 +30,10 @@ Celular o PC ──https──► Render (Flask) ──SSL──► Neon (Postgr
 3. En el proyecto, presionen **Connect**. Aparece la **cadena de conexión**:
 
    ```
-   postgresql://neondb_owner:XXXXXXXX@ep-algo-123456-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   postgresql://neondb_owner:<SU-CONTRASEÑA>@<SU-SERVIDOR>-pooler.<región>.aws.neon.tech/neondb?sslmode=require&channel_binding=require
    ```
 
-   Cópienla completa. La aplicación funciona con la cadena *pooled* (la que muestra por omisión) y con la directa.
+   Cópienla completa **desde Neon** (botón **Copy snippet**). No copien el ejemplo de arriba: es solo para mostrar la forma. La aplicación funciona con la cadena *pooled* (la que muestra por omisión) y con la directa.
 
 > **Esa cadena incluye la contraseña.** No la pongan en GitHub ni en chats. Si se filtra, en Neon vayan a **Roles → Reset password** y actualicen la cadena en Render.
 
