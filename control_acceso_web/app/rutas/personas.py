@@ -157,11 +157,13 @@ def editar(id_persona: int):
 @requiere("personas_editar")
 def estado(id_persona: int):
     activo = request.form.get("activo") == "1"
-    with db.transaccion() as conn:
-        fila = conn.execute("UPDATE personas SET activo = %s WHERE id_persona = %s RETURNING id_persona",
-                            (activo, id_persona)).fetchone()
-    if not fila:
+    if not db.uno("SELECT 1 AS x FROM personas WHERE id_persona = %s", (id_persona,)):
         abort(404)
+    with db.transaccion() as conn:
+        if activo:
+            conn.execute("UPDATE personas SET activo = TRUE WHERE id_persona = %s", (id_persona,))
+        else:                                   # baja lógica con procedimiento almacenado + trigger
+            conn.execute("CALL sp_baja_persona(%s, %s)", (id_persona, session["id_usuario"]))
     flash("Persona reactivada. Active también la credencial que corresponda." if activo
           else "Persona dada de baja: sus credenciales se desactivaron.", "ok")
     return redirect(url_for("personas.detalle", id_persona=id_persona))

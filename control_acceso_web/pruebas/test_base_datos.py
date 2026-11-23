@@ -272,6 +272,9 @@ def test_rol_de_minimo_privilegio(db):
             app.execute("SELECT password_hash FROM usuarios")
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             app.execute("DELETE FROM personas WHERE id_persona = 16")
+        fila = app.execute("CALL sp_crear_pase_visita('VIS', 16, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "
+                           "NULL, 'Reunión', now(), now() + interval '2 hours', TRUE, NULL, 1, NULL)").fetchone()
+        assert fila["p_id_credencial"] is not None
 
 
 def test_asistencia_historica(db):
@@ -279,3 +282,44 @@ def test_asistencia_historica(db):
     assert filas, "Los datos de demostración deben traer llegadas y salidas de días anteriores"
     assert all(f["hora_llegada"] < f["hora_salida"] for f in filas)
     assert all(f["estado"] == "fuera" for f in filas)
+
+
+# ------------------------------------------------------------------ procedimientos almacenados
+def test_sp_crear_pase_visita(db):
+    fila = db.execute(
+        """CALL sp_crear_pase_visita('PRV', NULL, 'Mario', 'López', NULL, NULL, NULL, 'INE X',
+                                     NULL, 'Fumigaciones Usumacinta', 7, 'Fumigación',
+                                     now() - interval '1 hour', now() + interval '5 hours', TRUE, NULL, 3, NULL)"""
+    ).fetchone()
+    c = db.execute("SELECT * FROM vw_credenciales WHERE id_credencial = %s", (fila["p_id_credencial"],)).fetchone()
+    assert (c["titular"], c["perfil"], c["usos_maximos"], c["estado"]) == ("Mario López", "Proveedor", 1, "vigente")
+    assert db.execute("SELECT adscripcion FROM vw_personas WHERE id_persona = %s",
+                      (c["id_persona"],)).fetchone()["adscripcion"] == "Fumigaciones Usumacinta"
+    # La auditoría registra al usuario que llamó al procedimiento
+    assert db.execute("SELECT count(*) AS n FROM auditoria WHERE id_usuario = 3 AND accion = 'alta'").fetchone()["n"] >= 2
+    with pytest.raises(psycopg.DatabaseError, match="caducidad") as e:
+        db.execute("""CALL sp_crear_pase_visita('VIS', 15, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'x',
+                                                now(), now() - interval '1 hour', FALSE, NULL, 3, NULL)""")
+    assert e.value.sqlstate == "GS011"
+
+
+def test_sp_generar_pases_evento_respeta_cupo(db):
+    assert db.execute("CALL sp_generar_pases_evento(1, 5, 'individuales', 'Conferencia', 1, NULL)"
+                      ).fetchone()["p_generados"] == 5
+    assert db.execute("SELECT max(descripcion) AS d FROM credenciales WHERE descripcion LIKE 'Conferencia%%'"
+                      ).fetchone()["d"] == "Conferencia #9"
+    with pytest.raises(psycopg.DatabaseError, match="cupo") as e:
+        db.execute("CALL sp_generar_pases_evento(1, 200, 'grupal', 'Excursión', 1, NULL)")
+    assert e.value.sqlstate == "GS023"
+
+
+def test_sp_cambiar_estado_y_baja_logica(db):
+    c = cred_de(db, 13)
+    db.execute("CALL sp_cambiar_estado_credencial(%s, FALSE, 2)", (c["id_credencial"],))
+    assert cred_de(db, 13)["activa"] is False
+    db.execute("CALL sp_baja_persona(5, 1)")
+    assert db.execute("SELECT activo FROM personas WHERE id_persona = 5").fetchone()["activo"] is False
+    assert cred_de(db, 5)["activa"] is False                  # el trigger desactivó su credencial
+    acciones = db.execute("SELECT tabla, accion, id_usuario FROM auditoria ORDER BY id_auditoria").fetchall()
+    assert acciones[0] == {"tabla": "credenciales", "accion": "desactivar", "id_usuario": 2}
+    assert {"tabla": "personas", "accion": "desactivar", "id_usuario": 1} in acciones

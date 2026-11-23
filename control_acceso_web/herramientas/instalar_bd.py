@@ -16,7 +16,8 @@ from pathlib import Path
 import psycopg
 
 RAIZ = Path(__file__).resolve().parent.parent
-ARCHIVOS = ["01_esquema.sql", "02_funciones.sql", "03_vistas.sql", "04_datos.sql", "05_seguridad.sql"]
+ARCHIVOS = ["01_esquema.sql", "02_funciones.sql", "03_vistas.sql", "04_datos.sql", "05_seguridad.sql",
+            "06_procedimientos.sql"]
 
 
 def leer_env(nombre: str) -> str | None:

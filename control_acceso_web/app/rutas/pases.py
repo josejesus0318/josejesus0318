@@ -19,35 +19,21 @@ def visita():
         if clase not in ("VIS", "PRV"):
             raise db.ErrorBD("Indique si es visitante o proveedor.")
         id_persona = entero("id_persona")
+        nuevo = id_persona is None
+        # Todo el alta se hace en PostgreSQL con un procedimiento almacenado (CALL)
         with db.transaccion() as conn:
-            if not id_persona:
-                id_persona = conn.execute(
-                    """INSERT INTO personas (id_tipo, nombre, apellido_paterno, apellido_materno, telefono,
-                                             correo, identificacion)
-                       VALUES ((SELECT id_tipo FROM tipos_persona WHERE clave = %s), %s, %s, %s, %s, %s, %s)
-                       RETURNING id_persona""",
-                    (clase, texto("nombre", True, 60), texto("apellido_paterno", True, 40),
-                     texto("apellido_materno", maximo=40), texto("telefono", maximo=15), texto("correo", maximo=120),
-                     texto("identificacion", maximo=40))).fetchone()["id_persona"]
-                if clase == "PRV":
-                    from .personas import guardar_detalle
-                    guardar_detalle(conn, id_persona, "PRV", True)
-            id_visita = conn.execute(
-                """INSERT INTO visitas (id_persona, id_anfitrion, motivo, fecha)
-                   VALUES (%s, %s, %s, (%s::timestamptz AT TIME ZONE zona_horaria())::date) RETURNING id_visita""",
-                (id_persona, entero("id_anfitrion"), texto("motivo", True, 200),
-                 fecha_hora_local("vigencia_inicio", True))).fetchone()["id_visita"]
-            perfil = "Proveedor" if clase == "PRV" else "Visitante"
-            usos = 1 if request.form.get("un_solo_uso") == "1" else None
             id_cred = conn.execute(
-                """INSERT INTO credenciales (tipo, id_persona, id_perfil, id_visita, vigencia_inicio, vigencia_fin,
-                                            usos_maximos, id_horario, creada_por)
-                   VALUES ('personal', %s, (SELECT id_perfil FROM perfiles_acceso WHERE nombre = %s), %s,
-                           %s::timestamptz, %s::timestamptz, %s, %s, %s)
-                   RETURNING id_credencial""",
-                (id_persona, perfil, id_visita, fecha_hora_local("vigencia_inicio", True),
-                 fecha_hora_local("vigencia_fin", True), usos, entero("id_horario"),
-                 session["id_usuario"])).fetchone()["id_credencial"]
+                """CALL sp_crear_pase_visita(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                                             %s::timestamptz, %s::timestamptz, %s, %s, %s, NULL)""",
+                (clase, id_persona,
+                 texto("nombre", nuevo, 60) if nuevo else None,
+                 texto("apellido_paterno", nuevo, 40) if nuevo else None,
+                 texto("apellido_materno", maximo=40), texto("telefono", maximo=15), texto("correo", maximo=120),
+                 texto("identificacion", maximo=40), entero("id_empresa"), texto("empresa_nueva", maximo=120),
+                 entero("id_anfitrion"), texto("motivo", True, 200),
+                 fecha_hora_local("vigencia_inicio", True), fecha_hora_local("vigencia_fin", True),
+                 request.form.get("un_solo_uso") == "1", entero("id_horario"), session["id_usuario"])
+            ).fetchone()["p_id_credencial"]
         flash("Pase creado. Muestre o envíe el código QR a la persona.", "ok")
         return redirect(url_for("credenciales.detalle", id_credencial=id_cred))
 
@@ -104,35 +90,9 @@ def generar(id_evento: int):
     """Genera N pases genéricos de un solo uso, o un pase grupal con N usos."""
     cantidad = entero("cantidad", True) or 0
     modo = request.form.get("modo", "individuales")
-    if not 1 <= cantidad <= 500:
-        raise db.ErrorBD("La cantidad debe estar entre 1 y 500.")
-    etiqueta = texto("etiqueta", maximo=80) or "Pase de evento"
     with db.transaccion() as conn:
-        ev = conn.execute("SELECT * FROM eventos WHERE id_evento = %s FOR UPDATE", (id_evento,)).fetchone()
-        if not ev:
-            abort(404)
-        emitidos = conn.execute(
-            "SELECT coalesce(sum(coalesce(usos_maximos, 1)), 0) AS n FROM credenciales WHERE id_evento = %s",
-            (id_evento,)).fetchone()["n"]
-        if ev["cupo"] and emitidos + cantidad > ev["cupo"]:
-            raise db.ErrorBD(f"Se rebasaría el cupo del evento ({ev['cupo']}). Ya hay {emitidos} lugares emitidos.")
-        perfil = "(SELECT id_perfil FROM perfiles_acceso WHERE nombre = 'Invitado a evento')"
-        if modo == "grupal":
-            conn.execute(
-                f"""INSERT INTO credenciales (tipo, descripcion, id_perfil, id_evento, vigencia_inicio, vigencia_fin,
-                                             usos_maximos, creada_por)
-                    VALUES ('generica', %s, {perfil}, %s, %s, %s, %s, %s)""",
-                (f"{etiqueta} ({cantidad} personas)", id_evento, ev["inicio"], ev["fin"], cantidad,
-                 session["id_usuario"]))
-        else:
-            conn.execute(
-                f"""INSERT INTO credenciales (tipo, descripcion, id_perfil, id_evento, vigencia_inicio, vigencia_fin,
-                                             usos_maximos, creada_por)
-                    SELECT 'generica', %s || ' #' || (%s + n), {perfil}, %s, %s, %s, 1, %s
-                      FROM generate_series(1, %s) n""",
-                (etiqueta, conn.execute("SELECT count(*) AS n FROM credenciales WHERE id_evento = %s",
-                                        (id_evento,)).fetchone()["n"],
-                 id_evento, ev["inicio"], ev["fin"], session["id_usuario"], cantidad))
+        conn.execute("CALL sp_generar_pases_evento(%s, %s, %s, %s, %s, NULL)",
+                     (id_evento, cantidad, modo, texto("etiqueta", maximo=80), session["id_usuario"]))
     flash(f"Se generaron los pases ({cantidad} {'lugares en un pase grupal' if modo == 'grupal' else 'pases'}).", "ok")
     return redirect(url_for("pases.evento", id_evento=id_evento))
 

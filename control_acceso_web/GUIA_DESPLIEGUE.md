@@ -50,6 +50,7 @@ Elijan **una** de estas dos opciones.
    3. `03_vistas.sql`
    4. `04_datos.sql`
    5. `05_seguridad.sql`
+   6. `06_procedimientos.sql`
 3. Ejecuten `SELECT count(*) FROM campus.personas;` para comprobar. Debe dar **16**.
 
 ### Opción B: con el instalador de Python, desde su computadora
@@ -71,6 +72,8 @@ En el Bloc de notas, peguen su cadena en la línea `DATABASE_URL=` y guarden. De
 ```
 
 Debe terminar con `>> Instalación terminada` y los totales: 16 personas, 21 credenciales y 4 usuarios.
+
+> **¿Ya habían instalado la base antes de que existieran los procedimientos almacenados?** No reinstalen todo: en el **SQL Editor** de Neon ejecuten solo `06_procedimientos.sql`. No borra datos.
 
 > Cualquiera de las dos opciones **borra y vuelve a crear** el esquema `campus`. Úsenlas solo para instalar o para regresar a los datos de demostración.
 

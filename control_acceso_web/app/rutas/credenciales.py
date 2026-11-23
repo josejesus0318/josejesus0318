@@ -129,7 +129,7 @@ def imprimir(id_credencial: int):
 def estado(id_credencial: int):
     activa = request.form.get("activa") == "1"
     with db.transaccion() as conn:
-        conn.execute("UPDATE credenciales SET activa = %s WHERE id_credencial = %s", (activa, id_credencial))
+        conn.execute("CALL sp_cambiar_estado_credencial(%s, %s, %s)", (id_credencial, activa, session["id_usuario"]))
     flash("Credencial activada." if activa else "Credencial desactivada: ya no permite entrar.", "ok")
     return redirect(request.referrer or url_for("credenciales.detalle", id_credencial=id_credencial))
 
