@@ -52,6 +52,12 @@ def cred_de(conn, id_persona):
     ).fetchone()
 
 
+def vigente_ahora(conn, id_credencial):
+    """El pase de la visita de demostración vale de 07:00 a 20:00 del día de instalación: lo centra en este momento."""
+    conn.execute("UPDATE credenciales SET vigencia_inicio = now() - interval '1 hour', "
+                 "vigencia_fin = now() + interval '1 hour' WHERE id_credencial = %s", (id_credencial,))
+
+
 def sin_horario(conn, id_credencial):
     """Asigna un horario de 24 h todos los días para que la prueba no dependa de la hora."""
     conn.execute(
@@ -129,6 +135,7 @@ def test_baja_de_persona(db):
 def test_pase_de_un_solo_uso(db):
     c = cred_de(db, 15)                                   # visitante Ana Karen, pase de 1 uso
     sin_horario(db, c["id_credencial"])
+    vigente_ahora(db, c["id_credencial"])
     r = registrar(db, "qr", c["token"], 1)
     assert (r["resultado"], r["evento"], r["usos_restantes"]) == ("permitido", "entrada", 0)
     assert db.execute("SELECT estado FROM visitas WHERE id_visita = 1").fetchone()["estado"] == "realizada"
@@ -218,6 +225,7 @@ def test_un_solo_uso_con_dos_lectores_al_mismo_tiempo(db):
     """FOR UPDATE: si dos casetas leen el mismo pase a la vez, solo una lo acepta."""
     c = cred_de(db, 15)
     sin_horario(db, c["id_credencial"])
+    vigente_ahora(db, c["id_credencial"])
     db.execute("UPDATE puntos_acceso SET sentido = 'entrada' WHERE id_punto = 2")   # B solo registra entradas
     resultados = {}
     with psycopg.connect(URL, row_factory=dict_row) as a, psycopg.connect(URL, row_factory=dict_row) as b:
