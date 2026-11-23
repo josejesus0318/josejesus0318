@@ -34,6 +34,25 @@ Sistema web de control de acceso y bitácora para el **Instituto Tecnológico de
 
 ---
 
+## SQL procedural en PostgreSQL
+
+| Tipo | Objeto | Qué hace | Dónde lo usa la aplicación |
+|---|---|---|---|
+| Procedimiento (`CALL`) | `sp_crear_pase_visita` | **Alta:** persona, visita y QR con caducidad en una transacción | Pase de visita / proveedor |
+| Procedimiento | `sp_generar_pases_evento` | **Alta masiva:** pases genéricos respetando el cupo (`FOR UPDATE`) | Eventos → Generar |
+| Procedimiento | `sp_cambiar_estado_credencial` | **Modificación:** activar o desactivar un QR | Botón Activar/Desactivar |
+| Procedimiento | `sp_baja_persona` | **Baja lógica:** nunca se borra a nadie | Personas → Dar de baja |
+| Función | `fn_registrar_acceso` | **Consulta + alta:** valida reglas y registra entrada/salida | Caseta (QR, NIP, manual) |
+| Función | `fn_login` | Verifica la contraseña cifrada (bcrypt) | Iniciar sesión |
+| Funciones | `horario_permite`, `estado_credencial`, `fecha_local` | Reglas de horario y estado | Validaciones y vistas |
+| Trigger | `trg_bitacora_inmutable` | Impide modificar o borrar la bitácora | Siempre |
+| Trigger | `trg_baja_persona` | Al dar de baja, desactiva sus credenciales | Siempre |
+| Triggers | `trg_auditoria_*` | Guardan quién activó, desactivó o dio de alta | Administración → Auditoría |
+
+Python llama a estos objetos con psycopg (`CALL …` y `SELECT … FROM fn_…`); las reglas no se repiten en el código de la aplicación.
+
+---
+
 ## Pantallas
 
 | Pantalla | Para qué sirve | Roles |
@@ -86,7 +105,8 @@ control_acceso_web/
 │   ├── 02_funciones.sql       fn_registrar_acceso, fn_login, horarios, triggers de bitácora y auditoría
 │   ├── 03_vistas.sql          Personas, credenciales, bitácora, asistencia, presentes, resumen
 │   ├── 04_datos.sql           Datos de demostración
-│   └── 05_seguridad.sql       Rol app_campus de mínimo privilegio
+│   ├── 05_seguridad.sql       Rol app_campus de mínimo privilegio
+│   └── 06_procedimientos.sql  Procedimientos almacenados (CALL) que usa la aplicación
 ├── app/
 │   ├── __init__.py            Configuración y registro de módulos
 │   ├── db.py                  Conexión y traducción de errores de PostgreSQL al español
@@ -95,7 +115,7 @@ control_acceso_web/
 │   ├── templates/             Pantallas HTML
 │   └── static/                CSS, JavaScript y librerías QR
 ├── herramientas/instalar_bd.py  Instala la base sin psql (útil en Windows)
-└── pruebas/                   40 pruebas automáticas (base de datos y web)
+└── pruebas/                   43 pruebas automáticas (base de datos y web)
 ```
 
 Para **agregar una función nueva**:
@@ -138,11 +158,12 @@ set TEST_DATABASE_URL=postgresql://...      # una base de PRUEBA: se borra en ca
 .venv\Scripts\python.exe -m pytest pruebas -v
 ```
 
-Son 40 pruebas en total:
-- **17 de reglas en PostgreSQL:**
+Son 43 pruebas en total:
+- **20 de reglas en PostgreSQL:**
   - horarios, un solo uso, vencidos y pases genéricos;
   - NIP con bloqueo y registro manual;
-  - dos lectores al mismo tiempo, bitácora inmutable y rol de mínimo privilegio.
+  - dos lectores al mismo tiempo, bitácora inmutable y rol de mínimo privilegio;
+  - los cuatro procedimientos almacenados.
 - **23 de la aplicación web:**
   - permisos por rol, CSRF y caseta;
   - altas, pases y cupo de eventos;
