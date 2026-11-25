@@ -55,9 +55,9 @@ def create_app(config: dict | None = None) -> Flask:
     seguridad.init_app(app)
     registrar_filtros(app)
 
-    from .rutas import admin, bitacora, caseta, credenciales, horarios, panel, pases, personas
+    from .rutas import admin, bitacora, caseta, credenciales, fotos, horarios, kiosco, panel, pases, personas
 
-    for modulo in (panel, caseta, personas, credenciales, pases, horarios, bitacora, admin):
+    for modulo in (panel, caseta, kiosco, personas, fotos, credenciales, pases, horarios, bitacora, admin):
         app.register_blueprint(modulo.bp)
 
     @app.errorhandler(403)

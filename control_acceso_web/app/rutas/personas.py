@@ -129,8 +129,13 @@ def detalle(id_persona: int):
         """SELECT v.*, a.nombre_completo AS anfitrion FROM visitas v
              LEFT JOIN vw_personas a ON a.id_persona = v.id_anfitrion
             WHERE v.id_persona = %s ORDER BY v.fecha DESC""", (id_persona,))
+    try:
+        tiene_foto = db.uno("SELECT EXISTS (SELECT 1 FROM fotos_personas WHERE id_persona = %s) AS x",
+                            (id_persona,))["x"]
+    except db.ErrorBD:                          # base sin el módulo del kiosco (07_kiosco.sql)
+        tiene_foto = False
     return render_template("personas/detalle.html", p=persona, credenciales=credenciales,
-                           asistencia=asistencia, accesos=accesos, visitas=visitas)
+                           asistencia=asistencia, accesos=accesos, visitas=visitas, tiene_foto=tiene_foto)
 
 
 @bp.route("/<int:id_persona>/editar", methods=["GET", "POST"])

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Kiosco de alumnos · Campus ITVH</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231b396a'/><text x='16' y='21' font-size='12' font-family='Arial' font-weight='bold' fill='white' text-anchor='middle'>ITVH</text></svg>">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosco.css') }}">
+</head>
+<body>
+<header class="k-barra">
+  <div class="k-marca">
+    <div class="k-logo">ITVH</div>
+    <div><b>{{ INSTITUCION }}</b><span>Registro de entrada de alumnos{% if punto %} · {{ punto.nombre }}{% endif %}</span></div>
+  </div>
+  <div class="k-reloj"><b id="reloj">--:--</b><span id="fecha"></span></div>
+</header>
+
+{% if not punto %}
+<main class="k-elegir">
+  <h1>¿En qué acceso está esta computadora?</h1>
+  <p>Se elige una sola vez. El kiosco solo se puede usar en accesos de entrada al campus.</p>
+  <div class="k-puntos">
+    {% for p in puntos %}
+      <a class="k-punto" href="{{ url_for('kiosco.inicio', punto=p.id_punto) }}"><b>{{ p.nombre }}</b><span>{{ p.ubicacion or '' }}</span></a>
+    {% else %}
+      <p>No hay accesos de entrada activos. Actívelos en Administración → Puntos de acceso.</p>
+    {% endfor %}
+  </div>
+</main>
+{% else %}
+<main class="k-principal">
+  <section class="k-captura">
+    <form id="form-kiosco" autocomplete="off">
+      <label for="numero">Escribe tu número de control</label>
+      <input id="numero" class="k-numero" inputmode="numeric" maxlength="20" autofocus
+             placeholder="Ej. 22301001" aria-describedby="ayuda-numero">
+      <button class="k-boton">Registrar entrada</button>
+      <p id="ayuda-numero" class="k-ayuda">Presiona <kbd>Enter</kbd> al terminar.</p>
+    </form>
+
+    <div class="k-camara">
+      <div class="k-camara-titulo">
+        <span>o muestra el código de tu credencial a la cámara</span>
+        <button type="button" id="btn-camara" class="k-boton-sec">Usar cámara</button>
+      </div>
+      <div id="lector" class="k-lector"><div class="k-lector-vacio">Cámara apagada</div></div>
+      <p id="estado-camara" class="k-ayuda"></p>
+    </div>
+  </section>
+
+  <section class="k-resultado espera" id="resultado" aria-live="assertive">
+    <div class="k-espera" id="vista-espera">
+      <h1>¡Bienvenido(a)!</h1>
+      <ol>
+        <li><b>1</b>Escribe tu número de control y presiona Enter.</li>
+        <li><b>2</b>Espera a que aparezca tu foto en la pantalla.</li>
+        <li><b>3</b>Muestra tu credencial al personal de vigilancia.</li>
+      </ol>
+      <p class="k-nota">Tu entrada queda registrada en la bitácora del campus.</p>
+    </div>
+
+    <div class="k-ficha oculto" id="vista-ficha">
+      <div class="k-foto">
+        <img id="foto" alt="Fotografía del alumno">
+        <span class="k-etiqueta-ejemplo oculto" id="foto-ejemplo">Foto de ejemplo</span>
+        <div class="k-sin-foto oculto" id="sin-foto">?</div>
+      </div>
+      <div class="k-datos">
+        <div class="k-estado" id="estado"></div>
+        <h2 id="nombre"></h2>
+        <dl>
+          <dt>No. de control</dt><dd id="control" class="mono"></dd>
+          <dt>Carrera</dt><dd id="carrera"></dd>
+          <dt>Semestre</dt><dd id="semestre"></dd>
+          <dt>Hora</dt><dd id="hora"></dd>
+        </dl>
+        <p class="k-mensaje" id="mensaje"></p>
+      </div>
+    </div>
+    <div class="k-progreso"><span id="progreso"></span></div>
+  </section>
+</main>
+{% endif %}
+
+<footer class="k-pie">
+  <span>¿Algún problema? Acude con el personal de vigilancia.</span>
+  <span class="k-pie-acciones">
+    {% if punto and puntos|length > 1 %}<a href="{{ url_for('kiosco.cambiar') }}">Cambiar acceso</a>{% endif %}
+    {% if puede('panel') %}<a href="{{ url_for('panel.inicio') }}">Ir al panel</a>{% endif %}
+    <form method="post" action="{{ url_for('panel.salir') }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button type="submit">Cerrar sesión</button>
+    </form>
+  </span>
+</footer>
+
+{% if punto %}
+<script src="{{ url_for('static', filename='vendor/html5-qrcode.min.js') }}"></script>
+<script>
+  window.KIOSCO = {
+    registrar: "{{ url_for('kiosco.registrar') }}",
+    punto: {{ punto.id_punto }},
+    segundos: {{ segundos }}
+  };
+</script>
+<script src="{{ url_for('static', filename='js/kiosco.js') }}"></script>
+{% else %}
+<script>
+  (function reloj() {
+    var d = new Date();
+    document.getElementById('reloj').textContent = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('fecha').textContent = d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+    setTimeout(reloj, 15000);
+  })();
+</script>
+{% endif %}
+</body>
+</html>

@@ -10,15 +10,18 @@ from flask import Flask, abort, flash, g, redirect, request, session, url_for
 
 # Qué puede hacer cada rol. Las plantillas usan puede('modulo') para mostrar el menú.
 PERMISOS: dict[str, set[str]] = {
-    "admin":      {"panel", "caseta", "personas", "personas_editar", "credenciales", "credenciales_editar",
-                   "credenciales_estado", "pases", "horarios", "bitacora", "admin"},
-    "vigilancia": {"panel", "caseta", "personas", "credenciales", "credenciales_estado", "bitacora"},
+    "admin":      {"panel", "caseta", "kiosco", "personas", "personas_editar", "credenciales", "credenciales_editar",
+                   "credenciales_estado", "pases", "horarios", "bitacora", "admin", "fotos"},
+    "vigilancia": {"panel", "caseta", "personas", "credenciales", "credenciales_estado", "bitacora", "fotos"},
     "recepcion":  {"panel", "personas", "personas_editar", "credenciales", "credenciales_editar",
-                   "credenciales_estado", "pases", "bitacora"},
-    "consulta":   {"panel", "personas", "credenciales", "bitacora"},
+                   "credenciales_estado", "pases", "bitacora", "fotos"},
+    "consulta":   {"panel", "personas", "credenciales", "bitacora", "fotos"},
+    # Computadora fija en un acceso: solo la pantalla del kiosco (y las fotos que muestra)
+    "kiosco":     {"kiosco", "fotos"},
 }
 
-NOMBRE_ROL = {"admin": "Administrador", "vigilancia": "Vigilancia", "recepcion": "Recepción", "consulta": "Consulta"}
+NOMBRE_ROL = {"admin": "Administrador", "vigilancia": "Vigilancia", "recepcion": "Recepción", "consulta": "Consulta",
+              "kiosco": "Kiosco de alumnos"}
 
 # Bloqueo sencillo de fuerza bruta en el login (por dirección IP, en memoria)
 _INTENTOS: dict[str, list[float]] = {}

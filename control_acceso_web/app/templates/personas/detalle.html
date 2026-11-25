@@ -20,6 +20,28 @@
 <div class="rejilla r2">
   <section class="tarjeta">
     <h2>Datos</h2>
+    <div class="ficha-foto">
+      <img src="{{ url_for('fotos.ver', id_persona=p.id_persona) }}" alt="Fotografía de {{ p.nombre_completo }}">
+      <div>
+        <p class="tenue" style="margin-top:0">{{ 'Fotografía registrada.' if tiene_foto else 'Sin fotografía: se muestra una imagen de ejemplo.' }}
+          {% if p.tipo_clave == 'ALU' %}El kiosco la muestra para que el guardia compare.{% endif %}</p>
+        {% if puede('personas_editar') %}
+        <form method="post" action="{{ url_for('fotos.subir', id_persona=p.id_persona) }}" enctype="multipart/form-data" class="linea">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <input type="file" name="foto" accept="image/jpeg,image/png,image/webp" required>
+          <button class="btn chico">{{ 'Cambiar foto' if tiene_foto else 'Subir foto' }}</button>
+        </form>
+        <span class="ayuda">JPG, PNG o WEBP de hasta 900 KB.</span>
+        {% if tiene_foto %}
+        <form method="post" action="{{ url_for('fotos.quitar', id_persona=p.id_persona) }}" class="linea" style="margin-top:.5rem"
+              data-confirmar="¿Quitar la fotografía?">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="btn chico peligro">Quitar foto</button>
+        </form>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
     <dl class="datos">
       {% if p.semestre %}<dt>Semestre</dt><dd>{{ p.semestre }}.º</dd>{% endif %}
       {% if p.puesto %}<dt>Puesto</dt><dd>{{ p.puesto }}</dd>{% endif %}

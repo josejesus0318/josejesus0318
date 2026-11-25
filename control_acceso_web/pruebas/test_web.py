@@ -246,3 +246,51 @@ def test_reportes_csv(app):
     texto = r.data.decode("utf-8-sig")
     assert texto.splitlines()[0].startswith("Fecha,Persona,Tipo")
     assert len(texto.splitlines()) > 10
+
+
+# ---------------------------------------------------------------- kiosco de alumnos
+PNG_1x1 = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d494441"
+    "54789c63f8ffffff7f0009fb03fd2a86e38a0000000049454e44ae426082")
+
+
+def test_kiosco_pantalla_y_permisos(app):
+    c = Cliente(app)
+    r = c.post("/login", usuario="kiosco", password="Campus#2026")
+    assert r.status_code == 302 and r.headers["Location"].endswith("/kiosco/")
+    assert "¿En qué acceso está esta computadora?" in c.get("/kiosco/").text       # dos accesos de entrada
+    assert "Escribe tu número de control" in c.get("/kiosco/?punto=1").text
+    assert "Escribe tu número de control" in c.get("/kiosco/").text                # recuerda el acceso
+    assert c.get("/personas/").status_code == 403
+    assert c.get("/").status_code == 403
+    assert Cliente(app, "vigilancia").get("/kiosco/").status_code == 403
+    assert "Kiosco de alumnos" in Cliente(app, "admin").get("/").text
+
+
+def test_kiosco_registra_y_muestra_foto_de_ejemplo(app):
+    c = Cliente(app, "kiosco")
+    c.get("/kiosco/?punto=1")
+    r = c.c.post("/kiosco/registrar", json={"dato": "22301001", "punto": 1}, headers={"X-CSRF-Token": c.csrf})
+    d = r.get_json()
+    assert d["resultado"] == "permitido" and d["foto"] == "/fotos/1" and d["foto_ejemplo"] is True
+    foto = c.get("/fotos/1")
+    assert foto.mimetype == "image/svg+xml" and foto.headers["X-Foto-Ejemplo"] == "1"
+    assert sql("SELECT metodo, evento, operador FROM vw_bitacora ORDER BY id_registro DESC LIMIT 1") == \
+        [("kiosco", "entrada", "kiosco")]
+    r = c.c.post("/kiosco/registrar", json={"dato": "", "punto": 1}, headers={"X-CSRF-Token": c.csrf})
+    assert r.status_code == 400
+
+
+def test_subir_y_quitar_foto(app):
+    import io
+    c = Cliente(app, "recepcion")
+    c.get("/personas/1")
+    r = c.post("/fotos/1", foto=(io.BytesIO(b"no soy una imagen"), "x.png"))
+    assert r.status_code == 302 and sql("SELECT count(*) FROM fotos_personas") == [(0,)]
+    c.post("/fotos/1", foto=(io.BytesIO(PNG_1x1), "foto.png"))
+    foto = c.c.get("/fotos/1")
+    assert foto.mimetype == "image/png" and foto.data == PNG_1x1 and foto.headers["X-Foto-Ejemplo"] == "0"
+    assert "Cambiar foto" in c.get("/personas/1").text
+    assert Cliente(app, "consulta").post("/fotos/1", foto=(io.BytesIO(PNG_1x1), "f.png")).status_code == 403
+    c.post("/fotos/1/quitar")
+    assert sql("SELECT count(*) FROM fotos_personas") == [(0,)]

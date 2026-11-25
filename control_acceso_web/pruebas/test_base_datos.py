@@ -331,3 +331,79 @@ def test_sp_cambiar_estado_y_baja_logica(db):
     acciones = db.execute("SELECT tabla, accion, id_usuario FROM auditoria ORDER BY id_auditoria").fetchall()
     assert acciones[0] == {"tabla": "credenciales", "accion": "desactivar", "id_usuario": 2}
     assert {"tabla": "personas", "accion": "desactivar", "id_usuario": 1} in acciones
+
+
+# ------------------------------------------------------------------ kiosco de alumnos
+def kiosco(conn, dato, punto=1, usuario=5):
+    return conn.execute("SELECT * FROM fn_kiosco_registrar(%s, %s, %s)", (str(dato), punto, usuario)).fetchone()
+
+
+def horario_24h(conn):
+    """Todos los perfiles con un horario de 24 h para que la prueba no dependa de la hora."""
+    conn.execute(
+        """INSERT INTO horarios (nombre) VALUES ('Prueba 24 h') ON CONFLICT (nombre) DO NOTHING;
+           INSERT INTO horario_franjas (id_horario, dia_semana, hora_inicio, hora_fin)
+           SELECT h.id_horario, d, '00:00', '23:59:59.999'
+             FROM horarios h, generate_series(1, 7) d WHERE h.nombre = 'Prueba 24 h'
+           ON CONFLICT DO NOTHING;
+           UPDATE perfiles_acceso SET id_horario = (SELECT id_horario FROM horarios WHERE nombre = 'Prueba 24 h')
+            WHERE id_horario IS NOT NULL""")
+
+
+def test_kiosco_registra_solo_entradas_con_numero_de_control(db):
+    horario_24h(db)
+    db.execute("UPDATE configuracion SET valor = '0' WHERE clave = 'kiosco_segundos_repeticion'")
+    r = kiosco(db, "22301001")
+    assert (r["resultado"], r["persona"], r["numero_control"]) == ("permitido", "Andrea Guadalupe Hernández Cruz",
+                                                                    "22301001")
+    assert r["carrera"] == "Ingeniería en Sistemas Computacionales" and r["semestre"] == 7
+    assert kiosco(db, "22301001")["resultado"] == "permitido"      # vuelve a entrar: nunca es salida
+    filas = db.execute("SELECT metodo, evento, id_usuario FROM registro_accesos WHERE id_persona = 1 "
+                       "AND fecha_local(fecha_hora) = fecha_local(now())").fetchall()
+    assert filas == [{"metodo": "kiosco", "evento": "entrada", "id_usuario": 5}] * 2
+    assert db.execute("SELECT por_kiosco FROM vw_resumen_hoy").fetchone()["por_kiosco"] == 2
+
+
+def test_kiosco_ignora_el_doble_registro(db):
+    horario_24h(db)
+    kiosco(db, "22301002")
+    r = kiosco(db, "22301002")
+    assert r["resultado"] == "repetido" and r["persona"] == "Luis Fernando Pérez Ramos"
+    assert db.execute("SELECT count(*) AS n FROM registro_accesos WHERE id_persona = 2 "
+                      "AND fecha_local(fecha_hora) = fecha_local(now())").fetchone()["n"] == 1
+
+
+def test_kiosco_solo_para_alumnos(db):
+    horario_24h(db)
+    assert kiosco(db, "D1045")["mensaje"].startswith("El kiosco es solo para alumnos")
+    visita = cred_de(db, 15)
+    r = kiosco(db, visita["token"])
+    assert r["resultado"] == "denegado" and r["mensaje"].startswith("El kiosco es solo para alumnos")
+    r = kiosco(db, "99999999")
+    assert (r["resultado"], r["mensaje"], r["persona"]) == ("denegado", "Número de control no registrado", None)
+    fila = db.execute("SELECT metodo, dato_leido FROM registro_accesos ORDER BY id_registro DESC LIMIT 1").fetchone()
+    assert fila == {"metodo": "kiosco", "dato_leido": "99999999"}
+
+
+def test_kiosco_aplica_las_reglas_de_acceso(db):
+    horario_24h(db)
+    assert kiosco(db, "20301077")["mensaje"] == "Alumno dado de baja"            # Diego
+    r = kiosco(db, "21301120")                                                   # Carlos: credencial desactivada
+    assert r["resultado"] == "denegado" and r["mensaje"].startswith("Credencial desactivada")
+    assert r["persona"] == "Carlos Eduardo Jiménez Torres"                       # la foto se muestra igual
+    # Horario que nunca coincide con este momento
+    db.execute("""INSERT INTO horarios (nombre) VALUES ('Nunca');
+                  UPDATE perfiles_acceso SET id_horario = currval('horarios_id_horario_seq') WHERE nombre = 'Alumno'""")
+    assert kiosco(db, "23301015")["mensaje"] == "Fuera del horario permitido"
+
+
+def test_kiosco_acepta_el_qr_de_la_credencial(db):
+    horario_24h(db)
+    r = kiosco(db, cred_de(db, 3)["token"].lower())
+    assert (r["resultado"], r["persona"]) == ("permitido", "Valeria Montserrat López Díaz")
+
+
+def test_kiosco_solo_en_accesos_de_entrada(db):
+    with pytest.raises(psycopg.DatabaseError, match="acceso de entrada") as e:
+        kiosco(db, "22301001", punto=3)                                          # Centro de Información
+    assert e.value.sqlstate == "GS030"

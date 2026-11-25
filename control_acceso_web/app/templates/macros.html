@@ -12,7 +12,7 @@
 {%- endmacro %}
 
 {% macro metodo(m) -%}
-  <span class="etiqueta azul">{{ {'qr': 'QR', 'nip': 'NIP', 'manual': 'Manual'}.get(m, m) }}</span>
+  <span class="etiqueta azul">{{ {'qr': 'QR', 'nip': 'NIP', 'manual': 'Manual', 'kiosco': 'Kiosco'}.get(m, m) }}</span>
 {%- endmacro %}
 
 {% macro usos(c) -%}

@@ -8,7 +8,7 @@ from ..seguridad import requiere
 
 bp = Blueprint("panel", __name__)
 
-PANTALLA_INICIAL = {"vigilancia": "caseta.inicio"}
+PANTALLA_INICIAL = {"vigilancia": "caseta.inicio", "kiosco": "kiosco.inicio"}
 
 
 @bp.route("/login", methods=["GET", "POST"])

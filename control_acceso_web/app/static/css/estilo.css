@@ -181,3 +181,9 @@ legend { font-weight: 700; padding: 0 .35rem; }
   .r2, .r3, .r4, .caseta { grid-template-columns: 1fr; }
   th, td { padding: .5rem .55rem; }
 }
+
+/* Fotografía en la ficha de la persona ------------------------------------------- */
+.ficha-foto { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+.ficha-foto img { width: 96px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde);
+                  background: var(--azul-claro); flex: none; }
+.ficha-foto input[type=file] { max-width: 220px; font-size: .85rem; }

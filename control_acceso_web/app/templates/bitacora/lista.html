@@ -15,7 +15,7 @@
     <option value="permitido" {{ 'selected' if f.resultado == 'permitido' }}>Permitido</option>
     <option value="denegado" {{ 'selected' if f.resultado == 'denegado' }}>Denegado</option></select></div>
   <div class="campo"><label>Método</label><select name="metodo"><option value="">Todos</option>
-    {% for m, t in [('qr','QR'),('nip','NIP'),('manual','Manual')] %}<option value="{{ m }}" {{ 'selected' if f.metodo == m }}>{{ t }}</option>{% endfor %}</select></div>
+    {% for m, t in [('qr','QR'),('nip','NIP'),('manual','Manual'),('kiosco','Kiosco')] %}<option value="{{ m }}" {{ 'selected' if f.metodo == m }}>{{ t }}</option>{% endfor %}</select></div>
   <div class="campo"><label>Buscar</label><input type="search" name="q" value="{{ f.q or '' }}" placeholder="Persona o motivo"></div>
   <button class="btn">Filtrar</button>
 </form>

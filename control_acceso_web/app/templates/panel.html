@@ -15,7 +15,7 @@
   <div class="cifra"><span>Entradas hoy</span><b>{{ resumen.entradas }}</b></div>
   <div class="cifra"><span>Salidas hoy</span><b>{{ resumen.salidas }}</b></div>
   <div class="cifra"><span>Accesos denegados</span><b>{{ resumen.denegados }}</b></div>
-  <div class="cifra"><span>Por QR · NIP · manual</span><b style="font-size:1.25rem;padding-top:.45rem">{{ resumen.por_qr }} · {{ resumen.por_nip }} · {{ resumen.manuales }}</b></div>
+  <div class="cifra"><span>Por QR · NIP · manual · kiosco</span><b style="font-size:1.25rem;padding-top:.45rem">{{ resumen.por_qr }} · {{ resumen.por_nip }} · {{ resumen.manuales }} · {{ resumen.por_kiosco if resumen.por_kiosco is defined else 0 }}</b></div>
 </div>
 
 <div class="rejilla r2">

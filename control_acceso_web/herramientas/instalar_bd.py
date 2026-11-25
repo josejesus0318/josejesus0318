@@ -17,7 +17,7 @@ import psycopg
 
 RAIZ = Path(__file__).resolve().parent.parent
 ARCHIVOS = ["01_esquema.sql", "02_funciones.sql", "03_vistas.sql", "04_datos.sql", "05_seguridad.sql",
-            "06_procedimientos.sql"]
+            "06_procedimientos.sql", "07_kiosco.sql"]
 
 
 def leer_env(nombre: str) -> str | None:
@@ -66,7 +66,7 @@ def main() -> int:
     print("\n>> Instalación terminada")
     for tabla, total in totales.items():
         print(f"   {tabla:<18} {total}")
-    print("\nUsuarios de demostración: admin, vigilancia, recepcion, consulta  (contraseña: Campus#2026)")
+    print("\nUsuarios de demostración: admin, vigilancia, recepcion, consulta, kiosco  (contraseña: Campus#2026)")
     return 0
 
 

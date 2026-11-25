@@ -51,6 +51,7 @@ Elijan **una** de estas dos opciones.
    4. `04_datos.sql`
    5. `05_seguridad.sql`
    6. `06_procedimientos.sql`
+   7. `07_kiosco.sql`
 3. Ejecuten `SELECT count(*) FROM campus.personas;` para comprobar. Debe dar **16**.
 
 ### Opción B: con el instalador de Python, desde su computadora
@@ -71,9 +72,11 @@ En el Bloc de notas, peguen su cadena en la línea `DATABASE_URL=` y guarden. De
 .venv\Scripts\python.exe herramientas\instalar_bd.py
 ```
 
-Debe terminar con `>> Instalación terminada` y los totales: 16 personas, 21 credenciales y 4 usuarios.
+Debe terminar con `>> Instalación terminada` y los totales: 16 personas, 21 credenciales y 5 usuarios.
 
-> **¿Ya habían instalado la base antes de que existieran los procedimientos almacenados?** No reinstalen todo: en el **SQL Editor** de Neon ejecuten solo `06_procedimientos.sql`. No borra datos.
+> **¿Ya tenían la base instalada?** No reinstalen todo. En el **SQL Editor** de Neon ejecuten solo lo que les falte, en orden. Ninguno de los dos borra datos:
+> - `06_procedimientos.sql`: procedimientos almacenados.
+> - `07_kiosco.sql`: kiosco de alumnos, fotografías y usuario `kiosco`.
 
 > Cualquiera de las dos opciones **borra y vuelve a crear** el esquema `campus`. Úsenlas solo para instalar o para regresar a los datos de demostración.
 
@@ -112,7 +115,7 @@ Debe terminar con `>> Instalación terminada` y los totales: 16 personas, 21 cre
 ## Paso 4. Cambiar las contraseñas de demostración
 
 En la aplicación, vayan a **Administración → Usuarios de la aplicación**:
-- Cambien la contraseña de `admin`, `vigilancia`, `recepcion` y `consulta`.
+- Cambien la contraseña de `admin`, `vigilancia`, `recepcion`, `consulta` y `kiosco`.
 - O creen usuarios nuevos y desactiven los de demostración.
 
 ## Paso 5. Probar el lector con el celular
@@ -121,6 +124,12 @@ En la aplicación, vayan a **Administración → Usuarios de la aplicación**:
 2. Presionen **Iniciar cámara** y acepten el permiso.
 3. En una computadora entren como `admin`. Vayan a **Credenciales**, abran cualquiera y apunten la cámara del celular al QR de la pantalla.
 4. La caseta del celular se pone en **verde** con "Acceso permitido". Si vuelven a leerlo después de 10 segundos, registra la **salida**.
+
+**Para probar el kiosco de alumnos:**
+1. En una computadora con cámara web, entren con el usuario `kiosco` y elijan **Acceso principal (peatonal)**.
+2. Tecleen el número de control `22301001` y presionen Enter: aparece la foto de ejemplo de Andrea y la entrada queda en la **Bitácora** con el método **Kiosco**.
+3. Prueben también `21301120` (credencial desactivada), `20301077` (alumno dado de baja) y `D1045` (docente: debe pasar por la caseta).
+4. Con **Usar cámara**, muestren el QR de la credencial de un alumno.
 
 **Para probar otros casos:**
 - **NIP:** pestaña **No. control + NIP**, número `22301001` y NIP `1234`.
