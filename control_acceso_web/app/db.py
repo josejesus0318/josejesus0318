@@ -46,6 +46,9 @@ def traducir(e: psycopg.Error) -> ErrorBD:
             pass
         return ErrorBD("No fue posible conectar con la base de datos. Si es la primera visita del día, "
                        f"espere unos segundos y vuelva a intentar. Detalle técnico: {detalle}")
+    if estado == "42883":
+        return ErrorBD("Falta una función en la base de datos: ejecute en Neon los scripts que falten de la carpeta "
+                       "database (por ejemplo 06_procedimientos.sql o 07_kiosco.sql).")
     if estado == "42P01":
         return ErrorBD("Faltan las tablas del sistema: ejecute los scripts de la carpeta database "
                        "(paso 2 de la guía de despliegue).")
